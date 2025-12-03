@@ -1,0 +1,14 @@
+# Django
+Django>=4.2,<5.0
+
+# For Hill cipher matrix operations
+numpy>=1.24.0
+
+# Testing
+pytest>=7.4.0
+pytest-django>=4.5.0
+pytest-cov>=4.1.0
+
+# Code quality (optional, for local checks)
+flake8>=6.1.0
+black>=23.0.0
