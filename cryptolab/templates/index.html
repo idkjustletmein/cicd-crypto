@@ -1,19 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CryptoLab - Cipher Toolkit</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             color: #e0e0e0;
         }
-        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
-        header { text-align: center; margin-bottom: 2rem; }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
         h1 {
             font-size: 2.5rem;
             background: linear-gradient(90deg, #00d9ff, #00ff88);
@@ -22,11 +38,22 @@
             background-clip: text;
             margin-bottom: 0.5rem;
         }
-        .subtitle { color: #888; font-size: 1rem; }
-        .mode-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+
+        .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .mode-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
         .mode-tab {
             padding: 0.75rem 2rem;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             border-radius: 8px;
             color: #e0e0e0;
@@ -34,36 +61,77 @@
             font-size: 1rem;
             transition: all 0.3s;
         }
+
         .mode-tab.active {
             background: linear-gradient(90deg, #00d9ff, #00ff88);
             color: #1a1a2e;
             font-weight: 600;
         }
-        .mode-tab:hover:not(.active) { background: rgba(255,255,255,0.2); }
+
+        .mode-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         .card {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 16px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .form-group { margin-bottom: 1.25rem; }
-        label { display: block; margin-bottom: 0.5rem; color: #00d9ff; font-weight: 500; }
-        textarea, input, select {
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #00d9ff;
+            font-weight: 500;
+        }
+
+        textarea,
+        input,
+        select {
             width: 100%;
             padding: 0.75rem 1rem;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             color: #e0e0e0;
             font-size: 1rem;
             transition: border-color 0.3s;
         }
-        textarea:focus, input:focus, select:focus { outline: none; border-color: #00d9ff; }
-        textarea { min-height: 100px; resize: vertical; font-family: 'Courier New', monospace; }
-        select { cursor: pointer; }
-        select option { background: #1a1a2e; color: #e0e0e0; }
-        .key-hint { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+
+        textarea:focus,
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #00d9ff;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        .key-hint {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
@@ -72,18 +140,36 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+
         .btn-primary {
             background: linear-gradient(90deg, #00d9ff, #00ff88);
             color: #1a1a2e;
             font-weight: 600;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4); }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: #e0e0e0; }
-        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
-        .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
         .result-box {
-            background: rgba(0,255,136,0.1);
-            border: 1px solid rgba(0,255,136,0.3);
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
             border-radius: 8px;
             padding: 1rem;
             font-family: 'Courier New', monospace;
@@ -91,26 +177,60 @@
             min-height: 60px;
             white-space: pre-wrap;
         }
-        .cipher-info { margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; }
-        .cipher-info h3 { color: #00d9ff; margin-bottom: 0.5rem; }
-        .cipher-info p { color: #aaa; line-height: 1.6; }
+
+        .cipher-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .cipher-info h3 {
+            color: #00d9ff;
+            margin-bottom: 0.5rem;
+        }
+
+        .cipher-info p {
+            color: #aaa;
+            line-height: 1.6;
+        }
+
         .error {
-            background: rgba(255,68,68,0.2);
-            border: 1px solid rgba(255,68,68,0.4);
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid rgba(255, 68, 68, 0.4);
             color: #ff6b6b;
             padding: 0.75rem;
             border-radius: 8px;
             margin-bottom: 1rem;
         }
-        .cipher-categories { margin-bottom: 1rem; }
-        .category-label { font-size: 0.8rem; color: #00d9ff; margin-top: 0.5rem; font-weight: 600; }
+
+        .cipher-categories {
+            margin-bottom: 1rem;
+        }
+
+        .category-label {
+            font-size: 0.8rem;
+            color: #00d9ff;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
         @media (max-width: 600px) {
-            .container { padding: 1rem; }
-            h1 { font-size: 1.75rem; }
-            .mode-tabs { flex-direction: column; }
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .mode-tabs {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -129,8 +249,11 @@
                 <select id="cipher-select">
                     <optgroup label="Classical Ciphers">
                         {% for key, cipher in ciphers.items %}
-                        {% if key in 'caesar,additive,multiplicative,affine,vigenere,hill,autokey,playfair,otp,vernam,railfence,columnar' %}
-                        <option value="{{ key }}" data-hint="{{ cipher.key_hint }}" data-description="{{ cipher.description }}">
+                        {% if key in
+                        'caesar,additive,multiplicative,affine,vigenere,hill,autokey,playfair,otp,vernam,railfence,columnar'
+                        %}
+                        <option value="{{ key }}" data-hint="{{ cipher.key_hint }}"
+                            data-description="{{ cipher.description }}">
                             {{ cipher.name }}
                         </option>
                         {% endif %}
@@ -139,16 +262,8 @@
                     <optgroup label="Modern Ciphers">
                         {% for key, cipher in ciphers.items %}
                         {% if key in 'feistel,des,aes,rsa' %}
-                        <option value="{{ key }}" data-hint="{{ cipher.key_hint }}" data-description="{{ cipher.description }}">
-                            {{ cipher.name }}
-                        </option>
-                        {% endif %}
-                        {% endfor %}
-                    </optgroup>
-                    <optgroup label="Hash Functions">
-                        {% for key, cipher in ciphers.items %}
-                        {% if key in 'hashing,sha1' %}
-                        <option value="{{ key }}" data-hint="{{ cipher.key_hint }}" data-description="{{ cipher.description }}">
+                        <option value="{{ key }}" data-hint="{{ cipher.key_hint }}"
+                            data-description="{{ cipher.description }}">
                             {{ cipher.name }}
                         </option>
                         {% endif %}
@@ -163,7 +278,12 @@
             </div>
 
             <div class="form-group">
-                <label for="key-input">Key</label>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label for="key-input">Key</label>
+                    <button type="button" id="gen-key-btn"
+                        style="background: none; border: none; color: #00d9ff; cursor: pointer; font-size: 0.85rem;">Generate
+                        Secure Key</button>
+                </div>
                 <input type="text" id="key-input" placeholder="Enter key">
                 <p class="key-hint" id="key-hint"></p>
             </div>
@@ -181,6 +301,14 @@
             <div class="cipher-info" id="cipher-info">
                 <h3 id="cipher-name"></h3>
                 <p id="cipher-description"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <label>History Log</label>
+            <div id="history-log"
+                style="max-height: 200px; overflow-y: auto; margin-top: 0.5rem; font-family: monospace; font-size: 0.9rem; color: #aaa;">
+                <p style="text-align: center; color: #555;">No operations yet.</p>
             </div>
         </div>
 
@@ -231,7 +359,7 @@
             try {
                 const endpoint = currentMode === 'encrypt' ? '/encrypt/' : '/decrypt/';
                 const bodyKey = currentMode === 'encrypt' ? 'plaintext' : 'ciphertext';
-                
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -254,6 +382,7 @@
                 document.getElementById('cipher-name').textContent = data.cipher_info.name;
                 document.getElementById('cipher-description').textContent = data.cipher_info.description;
             }
+            addToHistory(currentMode, cipherSelect.value, inputText.value, data.result);
         }
 
         function showError(message) {
@@ -271,6 +400,56 @@
             hideError();
         });
 
+        const genKeyBtn = document.getElementById('gen-key-btn');
+        const historyLog = document.getElementById('history-log');
+        let history = [];
+
+        genKeyBtn.addEventListener('click', () => {
+            const cipher = cipherSelect.value;
+            let key = '';
+            if (['caesar', 'additive', 'multiplicative', 'affine'].includes(cipher)) {
+                key = Math.floor(Math.random() * 25) + 1;
+                if (cipher === 'affine') key = '5 8'; // Simplified valid pair
+            } else if (cipher === 'vigenere' || cipher === 'autokey' || cipher === 'playfair') {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (let i = 0; i < 8; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            } else if (cipher === 'aes' || cipher === 'des' || cipher === 'feistel') {
+                const length = cipher === 'des' ? 8 : 16;
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                for (let i = 0; i < length; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            } else if (cipher === 'otp' || cipher === 'vernam') {
+                const textLen = inputText.value.length || 10;
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (let i = 0; i < textLen; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            } else {
+                key = 'SECRETKEY';
+            }
+            keyInput.value = key;
+        });
+
+        function addToHistory(mode, cipher, input, result) {
+            const entry = {
+                timestamp: new Date().toLocaleTimeString(),
+                mode: mode.toUpperCase(),
+                cipher: cipher,
+                input: input.substring(0, 10) + (input.length > 10 ? '...' : ''),
+                result: result.substring(0, 10) + (result.length > 10 ? '...' : '')
+            };
+            history.unshift(entry);
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (history.length === 0) return;
+            historyLog.innerHTML = history.map(h =>
+                `<div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0.5rem 0;">
+                    <span style="color: #00d9ff;">[${h.timestamp}]</span> 
+                    <strong>${h.mode}</strong> (${h.cipher}): 
+                    ${h.input} &rarr; <span style="color: #00ff88;">${h.result}</span>
+                </div>`
+            ).join('');
+        }
+
         copyBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(resultText.textContent);
             copyBtn.textContent = 'Copied!';
@@ -278,4 +457,5 @@
         });
     </script>
 </body>
+
 </html>

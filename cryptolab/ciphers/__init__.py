@@ -19,7 +19,7 @@ from .feistel import FeistelCipher
 from .des import DESCipher
 from .aes import AESCipher
 from .rsa import RSACipher
-from .hashing import HashingCipher, SHA1Cipher
+from .rsa import RSACipher
 
 # Registry of all available ciphers
 CIPHER_REGISTRY = {
@@ -39,8 +39,7 @@ CIPHER_REGISTRY = {
     'des': DESCipher,
     'aes': AESCipher,
     'rsa': RSACipher,
-    'hashing': HashingCipher,
-    'sha1': SHA1Cipher,
+    'rsa': RSACipher,
 }
 
 
