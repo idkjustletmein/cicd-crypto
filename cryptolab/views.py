@@ -32,6 +32,11 @@ def about(request):
     return render(request, 'about.html')
 
 
+def security(request):
+    """Render the security tools page."""
+    return render(request, 'security.html')
+
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
