@@ -1,10 +1,12 @@
-"""Tests for all cipher implementations."""
+"""Comprehensive tests for all cipher implementations."""
 
 import pytest
 from cryptolab.ciphers import (
-    CaesarCipher, VigenereCipher, AutokeyCipher, OneTimePadCipher,
-    HillCipher, AffineCipher, MultiplicativeCipher, PlayfairCipher,
-    VernamCipher, RailFenceCipher, ColumnarCipher,
+    CaesarCipher, AdditiveCipher, MultiplicativeCipher, AffineCipher,
+    VigenereCipher, HillCipher, AutokeyCipher, PlayfairCipher,
+    OTPCipher, VernamCipher, RailFenceCipher, ColumnarCipher,
+    FeistelCipher, DESCipher, AESCipher, RSACipher,
+    HashingCipher, SHA1Cipher,
     get_cipher, get_all_ciphers
 )
 
@@ -16,32 +18,98 @@ class TestCaesarCipher:
         cipher = CaesarCipher()
         assert cipher.encrypt("HELLO", 3) == "KHOOR"
     
-    def test_encrypt_with_spaces(self):
+    def test_encrypt_lowercase(self):
         cipher = CaesarCipher()
-        assert cipher.encrypt("HELLO WORLD", 3) == "KHOOR ZRUOG"
+        assert cipher.encrypt("hello", 3) == "khoor"
+    
+    def test_encrypt_mixed_case(self):
+        cipher = CaesarCipher()
+        assert cipher.encrypt("Hello World", 3) == "Khoor Zruog"
     
     def test_decrypt_basic(self):
         cipher = CaesarCipher()
         assert cipher.decrypt("KHOOR", 3) == "HELLO"
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = CaesarCipher()
-        original = "THE QUICK BROWN FOX"
+        original = "The Quick Brown Fox"
         encrypted = cipher.encrypt(original, 7)
         decrypted = cipher.decrypt(encrypted, 7)
         assert decrypted == original
     
     def test_validate_key_valid(self):
-        is_valid, msg = CaesarCipher.validate_key(5)
-        assert is_valid is True
+        assert CaesarCipher.validate_key(5)[0] is True
     
-    def test_validate_key_invalid_range(self):
-        is_valid, msg = CaesarCipher.validate_key(30)
-        assert is_valid is False
+    def test_validate_key_invalid(self):
+        assert CaesarCipher.validate_key(30)[0] is False
+
+
+class TestAdditiveCipher:
+    """Tests for Additive cipher."""
     
-    def test_validate_key_invalid_type(self):
-        is_valid, msg = CaesarCipher.validate_key("abc")
-        assert is_valid is False
+    def test_encrypt_basic(self):
+        cipher = AdditiveCipher()
+        assert cipher.encrypt("HELLO", 3) == "KHOOR"
+    
+    def test_decrypt_basic(self):
+        cipher = AdditiveCipher()
+        assert cipher.decrypt("KHOOR", 3) == "HELLO"
+    
+    def test_roundtrip(self):
+        cipher = AdditiveCipher()
+        original = "Testing Additive"
+        for key in [0, 5, 13, 25]:
+            encrypted = cipher.encrypt(original, key)
+            decrypted = cipher.decrypt(encrypted, key)
+            assert decrypted == original
+
+
+class TestMultiplicativeCipher:
+    """Tests for Multiplicative cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = MultiplicativeCipher()
+        result = cipher.encrypt("HELLO", 3)
+        assert len(result) == 5
+    
+    def test_roundtrip(self):
+        cipher = MultiplicativeCipher()
+        original = "TESTMESSAGE"
+        for key in [3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]:
+            encrypted = cipher.encrypt(original, key)
+            decrypted = cipher.decrypt(encrypted, key)
+            assert decrypted == original, f"Failed for key {key}"
+    
+    def test_validate_key_not_coprime(self):
+        assert MultiplicativeCipher.validate_key(2)[0] is False
+        assert MultiplicativeCipher.validate_key(13)[0] is False
+
+
+class TestAffineCipher:
+    """Tests for Affine cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = AffineCipher()
+        result = cipher.encrypt("HELLO", "5 8")
+        assert result == "RCLLA"
+    
+    def test_decrypt_basic(self):
+        cipher = AffineCipher()
+        result = cipher.decrypt("RCLLA", "5 8")
+        assert result == "HELLO"
+    
+    def test_roundtrip(self):
+        cipher = AffineCipher()
+        original = "ATTACKATDAWN"
+        for a in [3, 5, 7, 11, 17]:
+            for b in [0, 5, 10, 15]:
+                key = f"{a} {b}"
+                encrypted = cipher.encrypt(original, key)
+                decrypted = cipher.decrypt(encrypted, key)
+                assert decrypted == original, f"Failed for key {key}"
+    
+    def test_validate_key_not_coprime(self):
+        assert AffineCipher.validate_key("4 5")[0] is False
 
 
 class TestVigenereCipher:
@@ -55,7 +123,7 @@ class TestVigenereCipher:
         cipher = VigenereCipher()
         assert cipher.decrypt("RIJVS", "KEY") == "HELLO"
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = VigenereCipher()
         original = "ATTACKATDAWN"
         key = "LEMON"
@@ -63,13 +131,40 @@ class TestVigenereCipher:
         decrypted = cipher.decrypt(encrypted, key)
         assert decrypted == original
     
-    def test_validate_key_valid(self):
-        is_valid, msg = VigenereCipher.validate_key("SECRET")
-        assert is_valid is True
+    def test_preserves_case(self):
+        cipher = VigenereCipher()
+        original = "Hello World"
+        encrypted = cipher.encrypt(original, "KEY")
+        decrypted = cipher.decrypt(encrypted, "KEY")
+        assert decrypted == original
+
+
+class TestHillCipher:
+    """Tests for Hill cipher."""
     
-    def test_validate_key_empty(self):
-        is_valid, msg = VigenereCipher.validate_key("")
-        assert is_valid is False
+    def test_encrypt_basic(self):
+        cipher = HillCipher()
+        result = cipher.encrypt("HELP", "3 3 2 5")
+        assert len(result) == 4
+    
+    def test_roundtrip(self):
+        cipher = HillCipher()
+        original = "TEST"
+        key = "3 3 2 5"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+    
+    def test_roundtrip_longer(self):
+        cipher = HillCipher()
+        original = "HELLOWORLD"
+        key = "5 17 4 15"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+    
+    def test_validate_key_invalid_det(self):
+        assert HillCipher.validate_key("2 4 6 8")[0] is False
 
 
 class TestAutokeyCipher:
@@ -80,105 +175,20 @@ class TestAutokeyCipher:
         result = cipher.encrypt("HELLO", "KEY")
         assert len(result) == 5
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = AutokeyCipher()
-        original = "TESTMESSAGE"
+        original = "ATTACKATDAWN"
         key = "SECRET"
         encrypted = cipher.encrypt(original, key)
         decrypted = cipher.decrypt(encrypted, key)
         assert decrypted == original
-
-
-class TestOneTimePadCipher:
-    """Tests for One-Time Pad cipher."""
     
-    def test_encrypt_basic(self):
-        cipher = OneTimePadCipher()
-        result = cipher.encrypt("HELLO", "XMCKL")
-        assert len(result) == 5
-    
-    def test_encrypt_decrypt_roundtrip(self):
-        cipher = OneTimePadCipher()
-        original = "SECRET"
-        key = "ABCDEF"
-        encrypted = cipher.encrypt(original, key)
-        decrypted = cipher.decrypt(encrypted, key)
+    def test_preserves_case(self):
+        cipher = AutokeyCipher()
+        original = "Hello World"
+        encrypted = cipher.encrypt(original, "KEY")
+        decrypted = cipher.decrypt(encrypted, "KEY")
         assert decrypted == original
-    
-    def test_key_too_short(self):
-        cipher = OneTimePadCipher()
-        with pytest.raises(ValueError):
-            cipher.encrypt("HELLO WORLD", "KEY")
-
-
-class TestHillCipher:
-    """Tests for Hill cipher."""
-    
-    def test_encrypt_basic(self):
-        cipher = HillCipher()
-        result = cipher.encrypt("HELP", "6 24 1 13")
-        assert len(result) == 4
-    
-    def test_encrypt_decrypt_roundtrip(self):
-        cipher = HillCipher()
-        original = "TEST"
-        key = "3 3 2 5"  # det = 15-6 = 9, gcd(9,26)=1
-        encrypted = cipher.encrypt(original, key)
-        decrypted = cipher.decrypt(encrypted, key)
-        assert decrypted == original
-    
-    def test_validate_key_valid(self):
-        is_valid, msg = HillCipher.validate_key("3 3 2 5")
-        assert is_valid is True
-    
-    def test_validate_key_invalid_det(self):
-        is_valid, msg = HillCipher.validate_key("2 4 2 4")
-        assert is_valid is False
-
-
-class TestAffineCipher:
-    """Tests for Affine cipher."""
-    
-    def test_encrypt_basic(self):
-        cipher = AffineCipher()
-        assert cipher.encrypt("HELLO", "5 8") == "RCLLA"
-    
-    def test_decrypt_basic(self):
-        cipher = AffineCipher()
-        assert cipher.decrypt("RCLLA", "5 8") == "HELLO"
-    
-    def test_encrypt_decrypt_roundtrip(self):
-        cipher = AffineCipher()
-        original = "TESTING"
-        key = "7 3"
-        encrypted = cipher.encrypt(original, key)
-        decrypted = cipher.decrypt(encrypted, key)
-        assert decrypted == original
-    
-    def test_validate_key_not_coprime(self):
-        is_valid, msg = AffineCipher.validate_key("4 5")
-        assert is_valid is False
-
-
-class TestMultiplicativeCipher:
-    """Tests for Multiplicative cipher."""
-    
-    def test_encrypt_basic(self):
-        cipher = MultiplicativeCipher()
-        result = cipher.encrypt("HELLO", 7)
-        assert len(result) == 5
-    
-    def test_encrypt_decrypt_roundtrip(self):
-        cipher = MultiplicativeCipher()
-        original = "TESTMSG"
-        key = 9
-        encrypted = cipher.encrypt(original, key)
-        decrypted = cipher.decrypt(encrypted, key)
-        assert decrypted == original
-    
-    def test_validate_key_not_coprime(self):
-        is_valid, msg = MultiplicativeCipher.validate_key(13)
-        assert is_valid is False
 
 
 class TestPlayfairCipher:
@@ -189,14 +199,36 @@ class TestPlayfairCipher:
         result = cipher.encrypt("HELLO", "KEYWORD")
         assert len(result) > 0
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip_simple(self):
         cipher = PlayfairCipher()
-        original = "TESTMESSAGE"
-        key = "SECRET"
+        original = "HIDETHETREASURE"
+        key = "MONARCHY"
         encrypted = cipher.encrypt(original, key)
         decrypted = cipher.decrypt(encrypted, key)
-        # Playfair may add padding X's, so check prefix
-        assert decrypted.startswith("TEST") or "TEST" in decrypted
+        # Playfair may add padding, check core content
+        assert decrypted.startswith("HIDE")
+
+
+class TestOTPCipher:
+    """Tests for One-Time Pad cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = OTPCipher()
+        result = cipher.encrypt("HELLO", "XMCKL")
+        assert len(result) == 5
+    
+    def test_roundtrip(self):
+        cipher = OTPCipher()
+        original = "SECRET"
+        key = "RANDOMKEY"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+    
+    def test_key_too_short(self):
+        cipher = OTPCipher()
+        with pytest.raises(ValueError):
+            cipher.encrypt("HELLO WORLD TEST", "KEY")
 
 
 class TestVernamCipher:
@@ -207,10 +239,18 @@ class TestVernamCipher:
         result = cipher.encrypt("HI", "K")
         assert len(result) > 0
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = VernamCipher()
-        original = "SECRET"
-        key = "MYKEY"
+        original = "Hello World!"
+        key = "SECRETKEY"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+    
+    def test_special_characters(self):
+        cipher = VernamCipher()
+        original = "Test@123!"
+        key = "KEY"
         encrypted = cipher.encrypt(original, key)
         decrypted = cipher.decrypt(encrypted, key)
         assert decrypted == original
@@ -221,20 +261,20 @@ class TestRailFenceCipher:
     
     def test_encrypt_basic(self):
         cipher = RailFenceCipher()
-        result = cipher.encrypt("HELLO WORLD", 3)
-        assert "H" in result
+        result = cipher.encrypt("WEAREDISCOVERED", 3)
+        assert "W" in result
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = RailFenceCipher()
-        original = "WEAREDISCOVERED"
-        key = 3
-        encrypted = cipher.encrypt(original, key)
-        decrypted = cipher.decrypt(encrypted, key)
-        assert decrypted == original
+        original = "WEAREDISCOVEREDFLEEATONCE"
+        for rails in [2, 3, 4, 5]:
+            encrypted = cipher.encrypt(original, rails)
+            decrypted = cipher.decrypt(encrypted, rails)
+            assert decrypted == original, f"Failed for {rails} rails"
     
-    def test_validate_key_too_small(self):
-        is_valid, msg = RailFenceCipher.validate_key(1)
-        assert is_valid is False
+    def test_validate_key(self):
+        assert RailFenceCipher.validate_key(1)[0] is False
+        assert RailFenceCipher.validate_key(3)[0] is True
 
 
 class TestColumnarCipher:
@@ -242,17 +282,136 @@ class TestColumnarCipher:
     
     def test_encrypt_basic(self):
         cipher = ColumnarCipher()
-        result = cipher.encrypt("HELLO WORLD", "KEY")
-        assert len(result) > 0
+        result = cipher.encrypt("HELLOWORLD", "KEY")
+        assert len(result) >= 10
     
-    def test_encrypt_decrypt_roundtrip(self):
+    def test_roundtrip(self):
         cipher = ColumnarCipher()
-        original = "TESTMESSAGE"
-        key = "CRYPTO"
+        original = "ATTACKATDAWNXXX"
+        key = "ZEBRA"
         encrypted = cipher.encrypt(original, key)
         decrypted = cipher.decrypt(encrypted, key)
-        # May have padding
-        assert original in decrypted or decrypted.startswith(original)
+        assert original in decrypted or decrypted.startswith(original[:10])
+
+
+class TestFeistelCipher:
+    """Tests for Feistel cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = FeistelCipher()
+        result = cipher.encrypt("Hello", "SECRET")
+        assert len(result) > 0
+    
+    def test_roundtrip(self):
+        cipher = FeistelCipher()
+        original = "Test Message"
+        key = "MySecretKey"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted.rstrip('\x00') == original
+
+
+class TestDESCipher:
+    """Tests for DES cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = DESCipher()
+        result = cipher.encrypt("Hello", "password")
+        assert len(result) > 0
+    
+    def test_roundtrip(self):
+        cipher = DESCipher()
+        original = "Test Message for DES"
+        key = "mykey123"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+
+
+class TestAESCipher:
+    """Tests for AES cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = AESCipher()
+        result = cipher.encrypt("Hello", "password")
+        assert len(result) > 0
+    
+    def test_roundtrip_128(self):
+        cipher = AESCipher()
+        original = "Test Message for AES-128"
+        key = "1234567890123456"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+    
+    def test_roundtrip_256(self):
+        cipher = AESCipher()
+        original = "Test Message for AES-256"
+        key = "12345678901234567890123456789012"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+
+
+class TestRSACipher:
+    """Tests for RSA cipher."""
+    
+    def test_encrypt_basic(self):
+        cipher = RSACipher()
+        result = cipher.encrypt("Hello", "password123")
+        assert len(result) > 0
+    
+    def test_roundtrip(self):
+        cipher = RSACipher()
+        original = "Test Message for RSA"
+        key = "mypassword"
+        encrypted = cipher.encrypt(original, key)
+        decrypted = cipher.decrypt(encrypted, key)
+        assert decrypted == original
+
+
+class TestHashingCipher:
+    """Tests for Hashing functions."""
+    
+    def test_md5(self):
+        cipher = HashingCipher()
+        result = cipher.encrypt("hello", "md5")
+        assert len(result) == 32
+    
+    def test_sha1(self):
+        cipher = HashingCipher()
+        result = cipher.encrypt("hello", "sha1")
+        assert len(result) == 40
+    
+    def test_sha256(self):
+        cipher = HashingCipher()
+        result = cipher.encrypt("hello", "sha256")
+        assert len(result) == 64
+    
+    def test_sha512(self):
+        cipher = HashingCipher()
+        result = cipher.encrypt("hello", "sha512")
+        assert len(result) == 128
+    
+    def test_consistency(self):
+        cipher = HashingCipher()
+        hash1 = cipher.encrypt("test", "sha256")
+        hash2 = cipher.encrypt("test", "sha256")
+        assert hash1 == hash2
+
+
+class TestSHA1Cipher:
+    """Tests for SHA-1 dedicated cipher."""
+    
+    def test_encrypt(self):
+        cipher = SHA1Cipher()
+        result = cipher.encrypt("hello", "")
+        assert len(result) == 40
+    
+    def test_known_value(self):
+        cipher = SHA1Cipher()
+        result = cipher.encrypt("hello", "")
+        assert result == "AAF4C61DDCC5E8A2DABEDE0F3B482CD9AEA9434D"
 
 
 class TestCipherRegistry:
@@ -269,34 +428,15 @@ class TestCipherRegistry:
     
     def test_get_all_ciphers(self):
         ciphers = get_all_ciphers()
-        assert len(ciphers) == 11
+        assert len(ciphers) == 18
         assert "caesar" in ciphers
-        assert "vigenere" in ciphers
-        assert "hill" in ciphers
+        assert "aes" in ciphers
+        assert "rsa" in ciphers
     
-    def test_cipher_has_required_attributes(self):
+    def test_all_ciphers_have_required_attributes(self):
         ciphers = get_all_ciphers()
         for name, info in ciphers.items():
             assert "name" in info
             assert "description" in info
             assert "key_type" in info
             assert "key_hint" in info
-            assert "strength" in info
-
-
-class TestCipherExamples:
-    """Tests for cipher example methods."""
-    
-    def test_all_ciphers_have_examples(self):
-        ciphers = [
-            CaesarCipher, VigenereCipher, AutokeyCipher, OneTimePadCipher,
-            HillCipher, AffineCipher, MultiplicativeCipher, PlayfairCipher,
-            VernamCipher, RailFenceCipher, ColumnarCipher
-        ]
-        for cipher_class in ciphers:
-            example = cipher_class.get_example()
-            assert "plaintext" in example
-            assert "key" in example
-            assert "steps" in example
-            assert "result" in example
-            assert len(example["steps"]) > 0

@@ -39,15 +39,12 @@ def encrypt(request):
         
         cipher = cipher_class()
         result = cipher.encrypt(plaintext, key)
-        example = cipher_class.get_example()
         
         return JsonResponse({
             'result': result,
-            'example': example,
             'cipher_info': {
                 'name': cipher_class.name,
                 'description': cipher_class.description,
-                'strength': cipher_class.strength,
             }
         })
         

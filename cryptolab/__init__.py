@@ -1,1 +1,1 @@
-"""CryptoLab - A classical cipher encryption web application."""
+"""CryptoLab - A classical and modern cipher encryption web application."""

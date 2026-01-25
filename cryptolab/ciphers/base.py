@@ -8,9 +8,8 @@ class BaseCipher(ABC):
     
     name = "Base Cipher"
     description = "Base cipher class"
-    key_type = "text"  # 'text', 'number', 'matrix', etc.
+    key_type = "text"
     key_hint = "Enter key"
-    strength = 1  # 1-10 scale
     
     @abstractmethod
     def encrypt(self, plaintext: str, key) -> str:
@@ -23,16 +22,6 @@ class BaseCipher(ABC):
         pass
     
     @classmethod
-    def get_example(cls) -> dict:
-        """Return a step-by-step example of how the cipher works."""
-        return {
-            'plaintext': 'HELLO',
-            'key': 'KEY',
-            'steps': ['Step 1', 'Step 2'],
-            'result': 'ENCRYPTED'
-        }
-    
-    @classmethod
-    def validate_key(cls, key) -> tuple[bool, str]:
+    def validate_key(cls, key) -> tuple:
         """Validate the key. Returns (is_valid, error_message)."""
         return True, ""

@@ -1,33 +1,46 @@
 """
 CryptoLab Ciphers Package
-Contains implementations of classical cryptographic ciphers.
+Contains implementations of classical and modern cryptographic ciphers.
 """
 
 from .caesar import CaesarCipher
-from .vigenere import VigenereCipher
-from .autokey import AutokeyCipher
-from .onetimepad import OneTimePadCipher
-from .hill import HillCipher
-from .affine import AffineCipher
+from .additive import AdditiveCipher
 from .multiplicative import MultiplicativeCipher
+from .affine import AffineCipher
+from .vigenere import VigenereCipher
+from .hill import HillCipher
+from .autokey import AutokeyCipher
 from .playfair import PlayfairCipher
+from .otp import OTPCipher
 from .vernam import VernamCipher
 from .railfence import RailFenceCipher
 from .columnar import ColumnarCipher
+from .feistel import FeistelCipher
+from .des import DESCipher
+from .aes import AESCipher
+from .rsa import RSACipher
+from .hashing import HashingCipher, SHA1Cipher
 
 # Registry of all available ciphers
 CIPHER_REGISTRY = {
     'caesar': CaesarCipher,
-    'vigenere': VigenereCipher,
-    'autokey': AutokeyCipher,
-    'onetimepad': OneTimePadCipher,
-    'hill': HillCipher,
-    'affine': AffineCipher,
+    'additive': AdditiveCipher,
     'multiplicative': MultiplicativeCipher,
+    'affine': AffineCipher,
+    'vigenere': VigenereCipher,
+    'hill': HillCipher,
+    'autokey': AutokeyCipher,
     'playfair': PlayfairCipher,
+    'otp': OTPCipher,
     'vernam': VernamCipher,
     'railfence': RailFenceCipher,
     'columnar': ColumnarCipher,
+    'feistel': FeistelCipher,
+    'des': DESCipher,
+    'aes': AESCipher,
+    'rsa': RSACipher,
+    'hashing': HashingCipher,
+    'sha1': SHA1Cipher,
 }
 
 
@@ -44,7 +57,6 @@ def get_all_ciphers():
             'description': cipher.description,
             'key_type': cipher.key_type,
             'key_hint': cipher.key_hint,
-            'strength': cipher.strength,
         }
         for name, cipher in CIPHER_REGISTRY.items()
     }

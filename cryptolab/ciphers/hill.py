@@ -1,115 +1,147 @@
 """Hill Cipher implementation."""
 
-import numpy as np
+from math import gcd
 from .base import BaseCipher
 
 
 class HillCipher(BaseCipher):
     """
     Hill Cipher - uses matrix multiplication for encryption.
+    Encrypts blocks of letters using a key matrix.
     """
     
     name = "Hill Cipher"
     description = (
         "The Hill cipher uses linear algebra (matrix multiplication) to encrypt "
         "blocks of letters. The key is a square matrix that must be invertible "
-        "modulo 26. It was invented by Lester S. Hill in 1929 and was the first "
-        "polygraphic cipher practical for more than 3 symbols."
+        "modulo 26. Invented by Lester S. Hill in 1929."
     )
     key_type = "matrix"
-    key_hint = "Enter 4 numbers for 2x2 matrix (e.g., '6 24 1 13')"
-    strength = 6
+    key_hint = "Enter 4 numbers for 2x2 matrix (e.g., '3 3 2 5')"
     
-    def _parse_key(self, key: str) -> np.ndarray:
+    # Pre-computed modular inverses mod 26
+    MOD_INVERSES = {
+        1: 1, 3: 9, 5: 21, 7: 15, 9: 3, 11: 19,
+        15: 7, 17: 23, 19: 11, 21: 5, 23: 17, 25: 25
+    }
+    
+    def _parse_key(self, key: str) -> list:
         """Parse key string into a 2x2 matrix."""
-        numbers = [int(x) for x in key.split()]
+        numbers = [int(x) for x in str(key).split()]
         if len(numbers) != 4:
             raise ValueError("Key must be 4 numbers for a 2x2 matrix")
-        return np.array(numbers).reshape(2, 2)
+        return [[numbers[0], numbers[1]], [numbers[2], numbers[3]]]
     
-    def _mod_inverse(self, a: int, m: int = 26) -> int:
-        """Find modular multiplicative inverse."""
-        for x in range(1, m):
-            if (a * x) % m == 1:
-                return x
-        raise ValueError(f"No modular inverse for {a} mod {m}")
+    def _determinant(self, matrix: list) -> int:
+        """Calculate determinant of 2x2 matrix."""
+        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
     
-    def _matrix_mod_inverse(self, matrix: np.ndarray) -> np.ndarray:
-        """Find modular inverse of a 2x2 matrix."""
-        det = int(round(np.linalg.det(matrix))) % 26
-        det_inv = self._mod_inverse(det, 26)
+    def _mod_inverse(self, a: int) -> int:
+        """Get modular multiplicative inverse of a mod 26."""
+        a = a % 26
+        if a < 0:
+            a += 26
+        if a in self.MOD_INVERSES:
+            return self.MOD_INVERSES[a]
+        raise ValueError(f"No modular inverse for {a} mod 26")
+    
+    def _matrix_inverse(self, matrix: list) -> list:
+        """Calculate the inverse of a 2x2 matrix mod 26."""
+        det = self._determinant(matrix)
+        det_mod = det % 26
+        if det_mod < 0:
+            det_mod += 26
         
-        # Adjugate matrix for 2x2
-        adj = np.array([
-            [matrix[1, 1], -matrix[0, 1]],
-            [-matrix[1, 0], matrix[0, 0]]
-        ])
+        det_inv = self._mod_inverse(det_mod)
         
-        return (det_inv * adj) % 26
+        # Adjugate matrix for 2x2: swap diagonal, negate off-diagonal
+        adj = [
+            [matrix[1][1], -matrix[0][1]],
+            [-matrix[1][0], matrix[0][0]]
+        ]
+        
+        # Multiply adjugate by determinant inverse mod 26
+        inv = [
+            [(det_inv * adj[0][0]) % 26, (det_inv * adj[0][1]) % 26],
+            [(det_inv * adj[1][0]) % 26, (det_inv * adj[1][1]) % 26]
+        ]
+        
+        return inv
+    
+    def _matrix_multiply(self, matrix: list, vector: list) -> list:
+        """Multiply 2x2 matrix by 2x1 vector mod 26."""
+        return [
+            (matrix[0][0] * vector[0] + matrix[0][1] * vector[1]) % 26,
+            (matrix[1][0] * vector[0] + matrix[1][1] * vector[1]) % 26
+        ]
     
     def encrypt(self, plaintext: str, key: str) -> str:
         """Encrypt using Hill cipher."""
         matrix = self._parse_key(key)
         
-        # Prepare plaintext
-        clean = ''.join(c for c in plaintext.upper() if c.isalpha())
+        # Extract only letters and convert to uppercase
+        clean = ''.join(c.upper() for c in plaintext if c.isalpha())
+        
+        # Pad if necessary
         if len(clean) % 2 != 0:
-            clean += 'X'  # Padding
+            clean += 'X'
         
         result = []
         for i in range(0, len(clean), 2):
-            pair = np.array([ord(clean[i]) - ord('A'), ord(clean[i+1]) - ord('A')])
-            encrypted = np.dot(matrix, pair) % 26
-            result.append(chr(int(encrypted[0]) + ord('A')))
-            result.append(chr(int(encrypted[1]) + ord('A')))
+            # Convert pair to numbers
+            vector = [ord(clean[i]) - ord('A'), ord(clean[i+1]) - ord('A')]
+            
+            # Multiply by key matrix
+            encrypted = self._matrix_multiply(matrix, vector)
+            
+            # Convert back to letters
+            result.append(chr(encrypted[0] + ord('A')))
+            result.append(chr(encrypted[1] + ord('A')))
         
         return ''.join(result)
     
     def decrypt(self, ciphertext: str, key: str) -> str:
         """Decrypt using Hill cipher."""
         matrix = self._parse_key(key)
-        inv_matrix = self._matrix_mod_inverse(matrix)
+        inv_matrix = self._matrix_inverse(matrix)
         
-        clean = ''.join(c for c in ciphertext.upper() if c.isalpha())
+        # Extract only letters and convert to uppercase
+        clean = ''.join(c.upper() for c in ciphertext if c.isalpha())
         
         result = []
         for i in range(0, len(clean), 2):
-            pair = np.array([ord(clean[i]) - ord('A'), ord(clean[i+1]) - ord('A')])
-            decrypted = np.dot(inv_matrix, pair) % 26
-            result.append(chr(int(round(decrypted[0])) + ord('A')))
-            result.append(chr(int(round(decrypted[1])) + ord('A')))
+            if i + 1 >= len(clean):
+                break
+            
+            # Convert pair to numbers
+            vector = [ord(clean[i]) - ord('A'), ord(clean[i+1]) - ord('A')]
+            
+            # Multiply by inverse matrix
+            decrypted = self._matrix_multiply(inv_matrix, vector)
+            
+            # Convert back to letters
+            result.append(chr(decrypted[0] + ord('A')))
+            result.append(chr(decrypted[1] + ord('A')))
         
         return ''.join(result)
     
     @classmethod
-    def get_example(cls) -> dict:
-        return {
-            'plaintext': 'HELP',
-            'key': '6 24 1 13',
-            'steps': [
-                'Matrix K = [[6, 24], [1, 13]]',
-                'HE → [7, 4] × K = [7×6+4×1, 7×24+4×13] mod 26',
-                '[46, 220] mod 26 = [20, 12] → UM',
-                'LP → [11, 15] × K = [81, 459] mod 26',
-                '[81, 459] mod 26 = [3, 17] → DR',
-            ],
-            'result': 'UMDR'
-        }
-    
-    @classmethod
-    def validate_key(cls, key) -> tuple[bool, str]:
+    def validate_key(cls, key) -> tuple:
         try:
-            numbers = [int(x) for x in key.split()]
+            numbers = [int(x) for x in str(key).split()]
             if len(numbers) != 4:
                 return False, "Key must be 4 numbers for a 2x2 matrix"
-            matrix = np.array(numbers).reshape(2, 2)
-            det = int(round(np.linalg.det(matrix))) % 26
-            if det == 0:
-                return False, "Matrix determinant cannot be 0"
-            # Check if determinant is coprime with 26
-            from math import gcd
-            if gcd(det, 26) != 1:
-                return False, "Matrix determinant must be coprime with 26"
+            
+            matrix = [[numbers[0], numbers[1]], [numbers[2], numbers[3]]]
+            det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
+            det_mod = det % 26
+            if det_mod < 0:
+                det_mod += 26
+            
+            if det_mod == 0:
+                return False, "Matrix determinant cannot be 0 mod 26"
+            if gcd(det_mod, 26) != 1:
+                return False, f"Determinant ({det_mod}) must be coprime with 26"
             return True, ""
         except (ValueError, TypeError):
             return False, "Key must be 4 space-separated numbers"

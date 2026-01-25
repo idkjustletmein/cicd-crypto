@@ -1,8 +1,8 @@
 # Django
 Django>=4.2,<5.0
 
-# For Hill cipher matrix operations
-numpy>=1.24.0
+# Cryptography
+pycryptodome>=3.19.0
 
 # Testing
 pytest>=7.4.0

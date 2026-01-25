@@ -1,40 +1,43 @@
-"""Vigenère Cipher implementation."""
+"""One-Time Pad Cipher implementation."""
 
 from .base import BaseCipher
 
 
-class VigenereCipher(BaseCipher):
+class OTPCipher(BaseCipher):
     """
-    Vigenère Cipher - polyalphabetic substitution using a keyword.
-    Each letter of the key determines the shift for corresponding plaintext letter.
+    One-Time Pad - theoretically unbreakable when used correctly.
+    Key must be truly random, at least as long as message, and never reused.
     """
     
-    name = "Vigenère Cipher"
+    name = "One-Time Pad"
     description = (
-        "The Vigenère cipher uses a keyword to shift letters by varying amounts. "
-        "Each letter of the key determines the shift for the corresponding plaintext "
-        "letter. It was considered unbreakable for 300 years."
+        "The One-Time Pad is the only cipher proven to be theoretically unbreakable "
+        "when used correctly. The key must be truly random, at least as long as the "
+        "message, and never reused. Each key letter shifts the corresponding plaintext."
     )
     key_type = "text"
-    key_hint = "Enter keyword (letters only)"
+    key_hint = "Enter key (must be at least as long as message letters)"
     
     def encrypt(self, plaintext: str, key: str) -> str:
-        """Encrypt using Vigenère cipher."""
+        """Encrypt using One-Time Pad."""
         key = ''.join(c.upper() for c in str(key) if c.isalpha())
         if not key:
             raise ValueError("Key must contain at least one letter")
+        
+        # Count letters in plaintext
+        letter_count = sum(1 for c in plaintext if c.isalpha())
+        if len(key) < letter_count:
+            raise ValueError(f"Key ({len(key)} letters) must be at least as long as message ({letter_count} letters)")
         
         result = []
         key_index = 0
         
         for char in plaintext:
             if char.isalpha():
-                base = ord('A') if char.isupper() else ord('a')
                 x = ord(char.upper()) - ord('A')
-                shift = ord(key[key_index % len(key)]) - ord('A')
+                shift = ord(key[key_index]) - ord('A')
                 encrypted = (x + shift) % 26
                 
-                # Preserve case
                 if char.isupper():
                     result.append(chr(encrypted + ord('A')))
                 else:
@@ -46,22 +49,24 @@ class VigenereCipher(BaseCipher):
         return ''.join(result)
     
     def decrypt(self, ciphertext: str, key: str) -> str:
-        """Decrypt using Vigenère cipher."""
+        """Decrypt using One-Time Pad."""
         key = ''.join(c.upper() for c in str(key) if c.isalpha())
         if not key:
             raise ValueError("Key must contain at least one letter")
+        
+        letter_count = sum(1 for c in ciphertext if c.isalpha())
+        if len(key) < letter_count:
+            raise ValueError(f"Key ({len(key)} letters) must be at least as long as message ({letter_count} letters)")
         
         result = []
         key_index = 0
         
         for char in ciphertext:
             if char.isalpha():
-                base = ord('A') if char.isupper() else ord('a')
                 y = ord(char.upper()) - ord('A')
-                shift = ord(key[key_index % len(key)]) - ord('A')
+                shift = ord(key[key_index]) - ord('A')
                 decrypted = (y - shift) % 26
                 
-                # Preserve case
                 if char.isupper():
                     result.append(chr(decrypted + ord('A')))
                 else:
@@ -78,5 +83,5 @@ class VigenereCipher(BaseCipher):
             return False, "Key is required"
         clean_key = ''.join(c for c in key if c.isalpha())
         if not clean_key:
-            return False, "Key must contain at least one letter"
+            return False, "Key must contain letters"
         return True, ""
