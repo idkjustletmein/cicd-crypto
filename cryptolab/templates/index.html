@@ -249,9 +249,7 @@
                 <select id="cipher-select">
                     <optgroup label="Classical Ciphers">
                         {% for key, cipher in ciphers.items %}
-                        {% if key in
-                        'caesar,additive,multiplicative,affine,vigenere,hill,autokey,playfair,otp,vernam,railfence,columnar'
-                        %}
+                        {% if key in 'caesar,additive,multiplicative,affine,vigenere,hill,autokey,playfair,otp,vernam,railfence,columnar' %}
                         <option value="{{ key }}" data-hint="{{ cipher.key_hint }}"
                             data-description="{{ cipher.description }}">
                             {{ cipher.name }}
