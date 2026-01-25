@@ -117,5 +117,5 @@ class TestCiphersAPIView:
         response = client.get('/api/ciphers/')
         assert response.status_code == 200
         data = response.json()
-        assert len(data) == 11
+        assert len(data) == 18
         assert 'caesar' in data
