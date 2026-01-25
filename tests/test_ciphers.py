@@ -6,7 +6,6 @@ from cryptolab.ciphers import (
     VigenereCipher, HillCipher, AutokeyCipher, PlayfairCipher,
     OTPCipher, VernamCipher, RailFenceCipher, ColumnarCipher,
     FeistelCipher, DESCipher, AESCipher, RSACipher,
-    HashingCipher, SHA1Cipher,
     get_cipher, get_all_ciphers
 )
 
@@ -370,48 +369,6 @@ class TestRSACipher:
         assert decrypted == original
 
 
-class TestHashingCipher:
-    """Tests for Hashing functions."""
-    
-    def test_md5(self):
-        cipher = HashingCipher()
-        result = cipher.encrypt("hello", "md5")
-        assert len(result) == 32
-    
-    def test_sha1(self):
-        cipher = HashingCipher()
-        result = cipher.encrypt("hello", "sha1")
-        assert len(result) == 40
-    
-    def test_sha256(self):
-        cipher = HashingCipher()
-        result = cipher.encrypt("hello", "sha256")
-        assert len(result) == 64
-    
-    def test_sha512(self):
-        cipher = HashingCipher()
-        result = cipher.encrypt("hello", "sha512")
-        assert len(result) == 128
-    
-    def test_consistency(self):
-        cipher = HashingCipher()
-        hash1 = cipher.encrypt("test", "sha256")
-        hash2 = cipher.encrypt("test", "sha256")
-        assert hash1 == hash2
-
-
-class TestSHA1Cipher:
-    """Tests for SHA-1 dedicated cipher."""
-    
-    def test_encrypt(self):
-        cipher = SHA1Cipher()
-        result = cipher.encrypt("hello", "")
-        assert len(result) == 40
-    
-    def test_known_value(self):
-        cipher = SHA1Cipher()
-        result = cipher.encrypt("hello", "")
-        assert result == "AAF4C61DDCC5E8A2DABEDE0F3B482CD9AEA9434D"
 
 
 class TestCipherRegistry:
@@ -428,7 +385,7 @@ class TestCipherRegistry:
     
     def test_get_all_ciphers(self):
         ciphers = get_all_ciphers()
-        assert len(ciphers) == 18
+        assert len(ciphers) == 16
         assert "caesar" in ciphers
         assert "aes" in ciphers
         assert "rsa" in ciphers
