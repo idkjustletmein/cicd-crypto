@@ -31,7 +31,7 @@
             min-height: 100vh;
             color: var(--text-primary);
             background-image:
-                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
         }
 
@@ -39,7 +39,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 1.5rem;
+            padding: 0.75rem 2rem;
             background: rgba(10, 10, 26, 0.95);
             border-bottom: 1px solid var(--border-color);
             position: sticky;
@@ -50,29 +50,29 @@
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            font-size: 1.1rem;
+            gap: 0.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--accent-tertiary);
             text-decoration: none;
         }
 
         .logo svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             fill: var(--accent-primary);
         }
 
         .nav-links {
             display: flex;
-            gap: 1.25rem;
+            gap: 1.5rem;
         }
 
         .nav-link {
             color: var(--text-secondary);
             text-decoration: none;
             font-weight: 500;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         .nav-link:hover,
@@ -83,36 +83,42 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 1.5rem 2rem;
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             text-align: center;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
             color: var(--text-primary);
         }
 
         .subtitle {
             text-align: center;
             color: var(--text-secondary);
-            margin-bottom: 1rem;
-            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
         }
 
         .cipher-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.75rem;
+            gap: 1rem;
         }
 
-        @media (max-width: 1000px) {
+        @media (max-width: 1100px) {
+            .cipher-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 800px) {
             .cipher-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 500px) {
             .cipher-grid {
                 grid-template-columns: 1fr;
             }
@@ -121,33 +127,53 @@
         .cipher-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0.75rem;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 180px;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .cipher-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
         }
 
         .cipher-card h3 {
             color: var(--accent-tertiary);
-            margin-bottom: 0.35rem;
-            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
 
         .cipher-card p {
             color: var(--text-secondary);
-            line-height: 1.4;
-            font-size: 0.7rem;
-            margin-bottom: 0.5rem;
+            line-height: 1.5;
+            font-size: 0.85rem;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
         }
 
         .tags {
             display: flex;
-            gap: 0.35rem;
+            gap: 0.4rem;
             flex-wrap: wrap;
         }
 
         .tag {
-            padding: 0.15rem 0.4rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 10px;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             font-weight: 600;
         }
 
@@ -170,6 +196,23 @@
             background: rgba(16, 185, 129, 0.3);
             color: #6ee7b7;
         }
+
+        .try-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .try-btn:hover {
+            background: var(--accent-tertiary);
+        }
     </style>
 </head>
 
@@ -191,22 +234,25 @@
 
     <div class="container">
         <h1>Learn Cryptography</h1>
-        <p class="subtitle">Understand how each cipher works</p>
+        <p class="subtitle">Understand how each cipher works and try them out</p>
 
         <div class="cipher-grid">
             {% for key, cipher in ciphers.items %}
             <div class="cipher-card">
                 <h3>{{ cipher.name }}</h3>
-                <p>{{ cipher.description|truncatewords:20 }}</p>
-                <div class="tags">
-                    <span class="tag tag-key">{{ cipher.key_type }}</span>
-                    {% if key in 'caesar,multiplicative,railfence' %}
-                    <span class="tag tag-weak">Weak</span>
-                    {% elif key in 'affine,vigenere,autokey,columnar,playfair,hill,feistel' %}
-                    <span class="tag tag-medium">Medium</span>
-                    {% elif key in 'otp,vernam,des,aes,rsa' %}
-                    <span class="tag tag-strong">Strong</span>
-                    {% endif %}
+                <p>{{ cipher.description|truncatewords:25 }}</p>
+                <div class="card-footer">
+                    <div class="tags">
+                        <span class="tag tag-key">{{ cipher.key_type }}</span>
+                        {% if key in 'caesar,multiplicative,railfence' %}
+                        <span class="tag tag-weak">Weak</span>
+                        {% elif key in 'affine,vigenere,autokey,columnar,playfair,hill,feistel' %}
+                        <span class="tag tag-medium">Medium</span>
+                        {% elif key in 'otp,vernam,des,aes,rsa' %}
+                        <span class="tag tag-strong">Strong</span>
+                        {% endif %}
+                    </div>
+                    <a href="/?cipher={{ key }}" class="try-btn">Try it!</a>
                 </div>
             </div>
             {% endfor %}
