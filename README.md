@@ -11,7 +11,7 @@ A Django web application for classical cipher encryption, designed as a demo pro
 - **Modern UI**: Dark theme with animated background
 - **Encrypt & Decrypt**: Full bidirectional support
 - **Educational**: Step-by-step examples for each cipher
-- **Security Ratings**: Visual strength indicators
+- **Security Ratings**: Visual strength indicators for measurement purposes
 
 ## 🚀 CI/CD Pipeline
 
