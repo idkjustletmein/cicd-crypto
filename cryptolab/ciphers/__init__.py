@@ -4,7 +4,6 @@ Contains implementations of classical and modern cryptographic ciphers.
 """
 
 from .caesar import CaesarCipher
-from .additive import AdditiveCipher
 from .multiplicative import MultiplicativeCipher
 from .affine import AffineCipher
 from .vigenere import VigenereCipher
@@ -19,12 +18,9 @@ from .feistel import FeistelCipher
 from .des import DESCipher
 from .aes import AESCipher
 from .rsa import RSACipher
-from .rsa import RSACipher
 
-# Registry of all available ciphers
 CIPHER_REGISTRY = {
     'caesar': CaesarCipher,
-    'additive': AdditiveCipher,
     'multiplicative': MultiplicativeCipher,
     'affine': AffineCipher,
     'vigenere': VigenereCipher,
@@ -38,7 +34,6 @@ CIPHER_REGISTRY = {
     'feistel': FeistelCipher,
     'des': DESCipher,
     'aes': AESCipher,
-    'rsa': RSACipher,
     'rsa': RSACipher,
 }
 

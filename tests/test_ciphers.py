@@ -2,7 +2,7 @@
 
 import pytest
 from cryptolab.ciphers import (
-    CaesarCipher, AdditiveCipher, MultiplicativeCipher, AffineCipher,
+    CaesarCipher, MultiplicativeCipher, AffineCipher,
     VigenereCipher, HillCipher, AutokeyCipher, PlayfairCipher,
     OTPCipher, VernamCipher, RailFenceCipher, ColumnarCipher,
     FeistelCipher, DESCipher, AESCipher, RSACipher,
@@ -43,24 +43,6 @@ class TestCaesarCipher:
         assert CaesarCipher.validate_key(30)[0] is False
 
 
-class TestAdditiveCipher:
-    """Tests for Additive cipher."""
-    
-    def test_encrypt_basic(self):
-        cipher = AdditiveCipher()
-        assert cipher.encrypt("HELLO", 3) == "KHOOR"
-    
-    def test_decrypt_basic(self):
-        cipher = AdditiveCipher()
-        assert cipher.decrypt("KHOOR", 3) == "HELLO"
-    
-    def test_roundtrip(self):
-        cipher = AdditiveCipher()
-        original = "Testing Additive"
-        for key in [0, 5, 13, 25]:
-            encrypted = cipher.encrypt(original, key)
-            decrypted = cipher.decrypt(encrypted, key)
-            assert decrypted == original
 
 
 class TestMultiplicativeCipher:
@@ -385,7 +367,7 @@ class TestCipherRegistry:
     
     def test_get_all_ciphers(self):
         ciphers = get_all_ciphers()
-        assert len(ciphers) == 16
+        assert len(ciphers) == 15
         assert "caesar" in ciphers
         assert "aes" in ciphers
         assert "rsa" in ciphers
