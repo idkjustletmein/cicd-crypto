@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.git/
+.github/
+.idea/
+.vscode/
+.scannerwork/
+htmlcov/
+coverage.xml
+tests/
+*.log
+.env
