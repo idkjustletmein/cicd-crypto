@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - CryptoLab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --bg-card: rgba(30, 30, 60, 0.6);
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #06b6d4;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 26, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--accent-tertiary);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff, var(--accent-tertiary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            color: var(--accent-tertiary);
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .section ul {
+            color: var(--text-secondary);
+            margin-left: 1.5rem;
+            line-height: 2;
+        }
+
+        .section a {
+            color: var(--accent-primary);
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .tech-badge {
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="/" class="logo"><span>🔐</span> CryptoLab</a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Encrypt</a>
+            <a href="/learn/" class="nav-link">Learn</a>
+            <a href="/compare/" class="nav-link">Compare</a>
+            <a href="/about/" class="nav-link active">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>ℹ️ About CryptoLab</h1>
+        <p class="subtitle">A modern cryptography learning platform</p>
+
+        <div class="section">
+            <h2>🎯 Purpose</h2>
+            <p>CryptoLab is an educational web application designed to help students and enthusiasts learn about
+                classical and modern cryptographic algorithms. It provides hands-on experience with 16 different
+                ciphers.</p>
+        </div>
+
+        <div class="section">
+            <h2>🔐 Available Ciphers</h2>
+            <ul>
+                <li><strong>Substitution:</strong> Caesar, Additive, Multiplicative, Affine, Vigenère, Autokey</li>
+                <li><strong>Transposition:</strong> Rail Fence, Columnar, Hill, Playfair</li>
+                <li><strong>Stream:</strong> One-Time Pad (OTP), Vernam</li>
+                <li><strong>Modern:</strong> Feistel, DES, AES, RSA</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🛠️ Technology Stack</h2>
+            <p>This project demonstrates a complete CI/CD pipeline:</p>
+            <div class="tech-stack">
+                <span class="tech-badge">Python / Django</span>
+                <span class="tech-badge">GitHub Actions</span>
+                <span class="tech-badge">SonarCloud</span>
+                <span class="tech-badge">Docker</span>
+                <span class="tech-badge">Render</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📚 Resources</h2>
+            <p>Learn more about cryptography:</p>
+            <ul>
+                <li><a href="https://en.wikipedia.org/wiki/Cryptography" target="_blank">Wikipedia: Cryptography</a>
+                </li>
+                <li><a href="https://www.khanacademy.org/computing/computer-science/cryptography" target="_blank">Khan
+                        Academy: Cryptography</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>

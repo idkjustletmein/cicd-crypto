@@ -15,6 +15,24 @@ def index(request):
     return render(request, 'index.html', {'ciphers': ciphers})
 
 
+def learn(request):
+    """Render the learn page."""
+    ciphers = get_all_ciphers()
+    return render(request, 'learn.html', {'ciphers': ciphers})
+
+
+def compare(request):
+    """Render the compare page."""
+    ciphers = get_all_ciphers()
+    return render(request, 'compare.html', {'ciphers': ciphers})
+
+
+def about(request):
+    """Render the about page."""
+    return render(request, 'about.html')
+
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def encrypt(request):
