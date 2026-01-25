@@ -1,5 +1,6 @@
 # Django
 Django>=4.2,<5.0
+whitenoise>=6.5.0
 
 # Cryptography
 pycryptodome>=3.19.0
