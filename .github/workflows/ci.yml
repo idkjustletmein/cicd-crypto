@@ -141,6 +141,11 @@ jobs:
     if: always()
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -174,9 +179,7 @@ jobs:
           
           # --- Stage: Unit Tests ---
           if [ "${{ needs.test.result }}" == "success" ]; then
-            # Parse coverage from artifact if exists
             if [ -f artifacts/coverage-report/coverage.xml ]; then
-              # Extract line-rate (e.g., "0.455") and convert to percentage (45%)
               COV_RATE=$(grep -o 'line-rate="[^"]*"' artifacts/coverage-report/coverage.xml | head -1 | cut -d'"' -f2)
               COV_PCT=$(echo "$COV_RATE * 100" | bc | cut -d'.' -f1)%
               TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully ($COV_PCT Coverage)"
@@ -189,7 +192,6 @@ jobs:
             TEST_STATUS="$FAIL_ICON **Unit Tests**\\nFailed"
             if [ -f artifacts/test-errors/test_error.txt ]; then
                ERR=$(cat artifacts/test-errors/test_error.txt | head -n 3)
-               # Clean up error message for JSON
                ERR=$(echo "$ERR" | sed 's/"//g' | sed ':a;N;$!ba;s/\n/ /g')
                TEST_STATUS="$TEST_STATUS (See failure details below)"
             fi
@@ -203,20 +205,12 @@ jobs:
             SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
           else
             SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
-            
-            # Fetch specific reason from SonarCloud API
             SONAR_API="https://sonarcloud.io/api/qualitygates/project_status?projectKey=idkjustletmein_cicd-crypto&branch=$BRANCH"
             SONAR_RESPONSE=$(curl -s -u "$SONAR_TOKEN:" "$SONAR_API")
-            
-            # Parse errors using simple grep/sed (avoiding jq dependency issues if not installed)
-            # Look for "status":"ERROR" blocks and extract the metric key/value
-            # This is a basic extraction; for robust parsing jq is better but this works in bash
             FAILED_CONDITIONS=$(echo "$SONAR_RESPONSE" | grep -o '"status":"ERROR"[^}]*')
             if [ -n "$FAILED_CONDITIONS" ]; then
-               # Clean up the string to show user friendly message
-               # Example output: Duplicated Lines > 3.0%
-               REASON=$(echo "$FAILED_CONDITIONS" | sed 's/[{}]//g' | sed 's/"//g')
-               SONAR_DETAILS=",{\"name\": \"SonarCloud Failure\", \"value\": \"\`\`\`\\n$REASON\\n\`\`\`\", \"inline\": false}"
+               REASON=$(echo "$FAILED_CONDITIONS" | sed 's/[{}]//g' | sed 's/"//g' | tr '\n' ' ')
+               SONAR_DETAILS=",{\"name\": \"SonarCloud Failure\", \"value\": \"$REASON\", \"inline\": false}"
             fi
           fi
           
@@ -237,16 +231,12 @@ jobs:
              COLOR=15548997 # Red
              TITLE="Pipeline Failed"
              DESC="One or more stages failed to complete."
-             
-             # Append specific error logs if failed
              DETAILS_FIELD=""
              if [ -f artifacts/test-errors/test_error.txt ]; then
                 LOG=$(cat artifacts/test-errors/test_error.txt | head -c 1000)
                 LOG=$(echo "$LOG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
                 DETAILS_FIELD=",{\"name\": \"Failure Details\", \"value\": \"\`\`\`\\n$LOG\\n\`\`\`\", \"inline\": false}"
              fi
-             
-             # Add Sonar details if they exist
              if [ -n "$SONAR_DETAILS" ]; then
                 DETAILS_FIELD="$DETAILS_FIELD$SONAR_DETAILS"
              fi
@@ -258,22 +248,16 @@ jobs:
           fi
           
           # --- Calculate Duration ---
-          # Authenticate gh cli
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           START_TIME=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --json startedAt --jq '.startedAt')
-          
-          # Calculate seconds elapsed
           START_TS=$(date -d "$START_TIME" +%s)
           NOW_TS=$(date +%s)
           DURATION_SEC=$((NOW_TS - START_TS))
-          
-          # Format as Mm Ss
           MIN=$((DURATION_SEC / 60))
           SEC=$((DURATION_SEC % 60))
           DURATION_STR="⏱️ ${MIN}m ${SEC}s"
           
           # --- Construct Payload ---
-          # Vertical layout with separators + Duration
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
@@ -285,9 +269,7 @@ jobs:
                 { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
                 { "name": "Branch", "value": "$BRANCH", "inline": true },
                 { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
-                
                 { "name": "Stage Summary", "value": "────────────────────────────────────────", "inline": false },
-                
                 { "name": "", "value": "$TEST_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$SONAR_STATUS", "inline": false },
@@ -295,7 +277,6 @@ jobs:
                 { "name": "", "value": "$DOCKER_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DEPLOY_STATUS", "inline": false },
-                
                 { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
                 $DETAILS_FIELD
@@ -304,7 +285,7 @@ jobs:
               "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }]
           }
-          EOF
+EOF
           )
           
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
