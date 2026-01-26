@@ -398,6 +398,18 @@
             margin-bottom: 1rem;
             font-size: 0.9rem;
         }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        footer a {
+            color: var(--accent-tertiary);
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -507,6 +519,10 @@
                 </div>
             </div>
         </div>
+
+        <footer>
+            CryptoLab v2.0 • <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank">View Source</a>
+        </footer>
     </div>
 
     <script>
@@ -514,7 +530,6 @@
         const inputText = document.getElementById('input-text');
         const keyInput = document.getElementById('key-input');
         const keyHint = document.getElementById('key-hint');
-        const keyStatus = document.getElementById('key-status');
         const processBtn = document.getElementById('process-btn');
         const clearBtn = document.getElementById('clear-btn');
         const copyBtn = document.getElementById('copy-btn');
@@ -558,9 +573,6 @@
             const selected = cipherSelect.options[cipherSelect.selectedIndex];
             keyHint.textContent = selected.dataset.hint;
         }
-
-        // Have I Been Pwned Key Check (k-anonymity)
-
 
         genKeyBtn.addEventListener('click', () => {
             const cipher = cipherSelect.value;
