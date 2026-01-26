@@ -94,20 +94,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.qualitygate.wait=true > sonar_output.txt 2>&1 || (
-              echo "SonarCloud Analysis Failed" > sonar_error.txt &&
-              grep "QUALITY GATE STATUS: FAILED" sonar_output.txt >> sonar_error.txt || echo "Check SonarCloud dashboard for details" >> sonar_error.txt &&
-              cat sonar_output.txt &&
-              exit 1
-            )
-            cat sonar_output.txt
-
-      - name: Upload SonarCloud Errors
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sonar-errors
-          path: sonar_error.txt
+            -Dsonar.qualitygate.wait=true
 
   docker_build:
     name: Docker Build
@@ -148,55 +135,68 @@ jobs:
           path: errors/
         continue-on-error: true
 
-      - name: Download SonarCloud Errors
-        uses: actions/download-artifact@v4
-        with:
-          name: sonar-errors
-          path: errors/
-        continue-on-error: true
-
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          FAILED_JOBS=""
-          ERROR_DETAILS=""
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          WORKFLOW="${{ github.workflow }}"
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
           
-          if [ "${{ needs.test.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n❌ **Unit Tests**"
-            if [ -f errors/test_error.txt ]; then
-              DETAIL=$(cat errors/test_error.txt)
-              ERROR_DETAILS="${ERROR_DETAILS}\\n**Tests Failed:**\\n\`\`\`\\n${DETAIL}\\n\`\`\`"
-            fi
-          fi
-          
-          if [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n❌ **SonarCloud Analysis**"
-            if [ -f errors/sonar_error.txt ]; then
-              DETAIL=$(cat errors/sonar_error.txt)
-              ERROR_DETAILS="${ERROR_DETAILS}\\n**Quality Gate Failed:**\\n\`\`\`\\n${DETAIL}\\n\`\`\`"
-            fi
-          fi
-          
-          if [ "${{ needs.docker_build.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n❌ **Docker Build**"
-            ERROR_DETAILS="${ERROR_DETAILS}\\n**Docker Build Failed**"
-          fi
-          
-          if [ -n "$FAILED_JOBS" ]; then
-            COLOR=15548997
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
+            COLOR=15548997 # Red
             TITLE="🚫 Pipeline Failed"
-            DESCRIPTION="**Failed Stages:**${FAILED_JOBS}\\n${ERROR_DETAILS}"
+            DESCRIPTION="**Failed Stages:**"
+            
+            if [ "${{ needs.test.result }}" == "failure" ]; then
+              DESCRIPTION="$DESCRIPTION\\n❌ Unit Tests"
+              if [ -f errors/test_error.txt ]; then
+                # Read specific test error
+                ERR_MSG=$(cat errors/test_error.txt | head -n 5)
+                # Escape for JSON
+                ERR_MSG=$(echo "$ERR_MSG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+                DESCRIPTION="$DESCRIPTION\\n\`\`\`\\n$ERR_MSG\\n\`\`\`"
+              fi
+            fi
+            
+            if [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
+               DESCRIPTION="$DESCRIPTION\\n❌ SonarCloud Analysis\\nQuality Gate Check Failed. [View Report](https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=main)"
+            fi
+            
+            if [ "${{ needs.docker_build.result }}" == "failure" ]; then
+               DESCRIPTION="$DESCRIPTION\\n❌ Docker Build"
+            fi
+            
           else
-            COLOR=5763719
-            TITLE="✅ Pipeline Success"
-            DESCRIPTION="**All systems go!** 🚀\\n\\n- Unit Tests passed\\n- Quality Gate passed\\n- Docker Image built & pushed\\n- Deployment triggered"
+            COLOR=5763719 # Green
+            TITLE="✅ Pipeline Succeeded"
+            DESCRIPTION="All stages completed successfully!"
           fi
           
-          # Escape output for JSON
-          DESCRIPTION=$(echo "$DESCRIPTION" | sed 's/"/\\"/g' | tr -d '\r')
+          # Construct JSON Payload with Fields
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "$TITLE",
+              "description": "$DESCRIPTION",
+              "color": $COLOR,
+              "url": "$RUN_URL",
+              "fields": [
+                { "name": "Repository", "value": "$REPO", "inline": true },
+                { "name": "Branch", "value": "$BRANCH", "inline": true },
+                { "name": "Commit", "value": "$SHORT_SHA", "inline": true },
+                { "name": "Author", "value": "$ACTOR", "inline": true },
+                { "name": "Workflow", "value": "$WORKFLOW", "inline": true }
+              ],
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
           
-          curl -H "Content-Type: application/json" \
-               -d "{\"embeds\": [{\"title\": \"$TITLE\", \"description\": \"$DESCRIPTION\", \"color\": $COLOR, \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\", \"footer\": {\"text\": \"CryptoLab CI/CD • Run #${{ github.run_number }}\"}}]}" \
-               "$DISCORD_WEBHOOK"
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
 
