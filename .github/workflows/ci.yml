@@ -121,13 +121,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cryptolab:latest
 
-  notify:
-    name: Discord Notification
-    runs-on: ubuntu-latest
-    needs: [test, sonarcloud, docker_build]
-    if: always()
-    
-    steps:
+
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
