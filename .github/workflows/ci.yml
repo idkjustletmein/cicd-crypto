@@ -230,8 +230,6 @@ jobs:
                 { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
                 { "name": "Branch", "value": "$BRANCH", "inline": true },
                 { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
-                { "name": "Author", "value": "$ACTOR", "inline": true },
-                { "name": "Workflow", "value": "$WORKFLOW", "inline": true },
                 
                 { "name": "Stage Summary", "value": "────────────────────────────────────────", "inline": false },
                 
