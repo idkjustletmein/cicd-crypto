@@ -104,3 +104,42 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cryptolab:latest
 
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs: [test, sonarcloud, docker_build]
+    if: always()
+
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          FAILED_JOBS=""
+          
+          if [ "${{ needs.test.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS\\n- Unit Tests"
+          fi
+          
+          if [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS\\n- SonarCloud Analysis"
+          fi
+          
+          if [ "${{ needs.docker_build.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS\\n- Docker Build"
+          fi
+          
+          if [ -n "$FAILED_JOBS" ]; then
+            COLOR=15548997
+            TITLE="Pipeline Failed"
+            DESCRIPTION="The pipeline failed in the following stages:${FAILED_JOBS}"
+          else
+            COLOR=5763719
+            TITLE="Pipeline Success"
+            DESCRIPTION="All stages passed successfully! 🚀"
+          fi
+          
+          curl -H "Content-Type: application/json" \
+               -d "{\"embeds\": [{\"title\": \"$TITLE\", \"description\": \"$DESCRIPTION\", \"color\": $COLOR, \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}]}" \
+               "$DISCORD_WEBHOOK"
+
