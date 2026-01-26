@@ -151,6 +151,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           # --- Metadata ---
           COMMIT_SHA="${{ github.sha }}"
@@ -195,12 +196,28 @@ jobs:
           fi
           
           # --- Stage: SonarCloud ---
+          SONAR_DETAILS=""
           if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
             SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed\\n[View Dashboard]($SONAR_URL)"
           elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
             SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
           else
             SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
+            
+            # Fetch specific reason from SonarCloud API
+            SONAR_API="https://sonarcloud.io/api/qualitygates/project_status?projectKey=idkjustletmein_cicd-crypto&branch=$BRANCH"
+            SONAR_RESPONSE=$(curl -s -u "$SONAR_TOKEN:" "$SONAR_API")
+            
+            # Parse errors using simple grep/sed (avoiding jq dependency issues if not installed)
+            # Look for "status":"ERROR" blocks and extract the metric key/value
+            # This is a basic extraction; for robust parsing jq is better but this works in bash
+            FAILED_CONDITIONS=$(echo "$SONAR_RESPONSE" | grep -o '"status":"ERROR"[^}]*')
+            if [ -n "$FAILED_CONDITIONS" ]; then
+               # Clean up the string to show user friendly message
+               # Example output: Duplicated Lines > 3.0%
+               REASON=$(echo "$FAILED_CONDITIONS" | sed 's/[{}]//g' | sed 's/"//g')
+               SONAR_DETAILS=",{\"name\": \"SonarCloud Failure\", \"value\": \"\`\`\`\\n$REASON\\n\`\`\`\", \"inline\": false}"
+            fi
           fi
           
           # --- Stage: Docker Build ---
@@ -227,6 +244,11 @@ jobs:
                 LOG=$(cat artifacts/test-errors/test_error.txt | head -c 1000)
                 LOG=$(echo "$LOG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
                 DETAILS_FIELD=",{\"name\": \"Failure Details\", \"value\": \"\`\`\`\\n$LOG\\n\`\`\`\", \"inline\": false}"
+             fi
+             
+             # Add Sonar details if they exist
+             if [ -n "$SONAR_DETAILS" ]; then
+                DETAILS_FIELD="$DETAILS_FIELD$SONAR_DETAILS"
              fi
           else
              COLOR=5763719 # Green
