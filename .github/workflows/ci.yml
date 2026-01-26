@@ -218,7 +218,7 @@ jobs:
           fi
           
           # --- Construct Payload ---
-          # We use fields to simulate the table/list layout
+          # Vertical layout with separators
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
@@ -228,15 +228,20 @@ jobs:
               "url": "$RUN_URL",
               "fields": [
                 { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
-                { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
                 { "name": "Branch", "value": "$BRANCH", "inline": true },
+                { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
+                { "name": "Author", "value": "$ACTOR", "inline": true },
+                { "name": "Workflow", "value": "$WORKFLOW", "inline": true },
                 
-                { "name": "Stage Summary", "value": "----------------------------------------", "inline": false },
+                { "name": "Stage Summary", "value": "────────────────────────────────────────", "inline": false },
                 
-                { "name": "", "value": "$TEST_STATUS", "inline": true },
-                { "name": "", "value": "$SONAR_STATUS", "inline": true },
-                { "name": "", "value": "$DOCKER_STATUS", "inline": true },
-                { "name": "", "value": "$DEPLOY_STATUS", "inline": true }
+                { "name": "", "value": "$TEST_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$SONAR_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$DOCKER_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$DEPLOY_STATUS", "inline": false }
                 $DETAILS_FIELD
               ],
               "footer": { "text": "Run #${{ github.run_number }} • Triggered by $ACTOR" },
