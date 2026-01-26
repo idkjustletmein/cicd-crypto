@@ -138,6 +138,7 @@ jobs:
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
           # --- Metadata ---
           COMMIT_SHA="${{ github.sha }}"
@@ -147,6 +148,11 @@ jobs:
           ACTOR="${{ github.actor }}"
           COMMIT_MSG=$(git log -1 --pretty=%B || echo "No commit message")
           RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          
+          # --- Links ---
+          SONAR_URL="https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=$BRANCH"
+          DOCKER_URL="https://hub.docker.com/r/$DOCKER_USERNAME/cryptolab"
+          RENDER_URL="https://cryptolab-sxo4.onrender.com"
           
           # --- Status Icons ---
           PASS_ICON="✅"
@@ -178,17 +184,17 @@ jobs:
           
           # --- Stage: SonarCloud ---
           if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
-            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed"
+            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed\\n[View Dashboard]($SONAR_URL)"
           elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
             SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
           else
-            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed"
+            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
           fi
           
           # --- Stage: Docker Build ---
           if [ "${{ needs.docker_build.result }}" == "success" ]; then
-             DOCKER_STATUS="$PASS_ICON **Docker Build**\\nImage Pushed to Hub"
-             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nTriggered via Render"
+             DOCKER_STATUS="$PASS_ICON **Docker Build**\\nImage Pushed to Hub\\n[View Image]($DOCKER_URL)"
+             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nTriggered via Render\\n[View Site]($RENDER_URL)"
           elif [ "${{ needs.docker_build.result }}" == "skipped" ]; then
              DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped"
              DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nSkipped"
@@ -256,6 +262,7 @@ jobs:
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DEPLOY_STATUS", "inline": false },
                 
+                { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
                 $DETAILS_FIELD
               ],
