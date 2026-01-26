@@ -431,6 +431,7 @@
     </nav>
 
     <div class="container">
+        {% csrf_token %}
         <div class="hero">
             <h1>Encrypt & Decrypt with Ease</h1>
             <p>15 classical and modern ciphers at your fingertips</p>
@@ -598,6 +599,21 @@
             keyInput.value = key;
         });
 
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         processBtn.addEventListener('click', async () => {
             const cipher = cipherSelect.value;
             const text = inputText.value;
@@ -608,7 +624,10 @@
                 const bodyKey = currentMode === 'encrypt' ? 'plaintext' : 'ciphertext';
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
                     body: JSON.stringify({ cipher, [bodyKey]: text, key })
                 });
                 const data = await response.json();

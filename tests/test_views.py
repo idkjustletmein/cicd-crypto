@@ -119,3 +119,22 @@ class TestCiphersAPIView:
         data = response.json()
         assert len(data) == 15
         assert 'caesar' in data
+
+    def test_learn_view(self, client):
+        """Test the learn view returns 200."""
+        response = client.get('/learn/')
+        assert response.status_code == 200
+        assert b"Learn Cryptography" in response.content
+
+    def test_about_view(self, client):
+        """Test the about view returns 200."""
+        response = client.get('/about/')
+        assert response.status_code == 200
+        assert b"About CryptoLab" in response.content
+
+    def test_security_view(self, client):
+        """Test the security view returns 200."""
+        response = client.get('/security/')
+        assert response.status_code == 200
+        assert b"Password Security Check" in response.content
+

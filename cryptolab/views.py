@@ -9,12 +9,14 @@ from django.views.decorators.csrf import csrf_exempt
 from .ciphers import get_cipher, get_all_ciphers
 
 
+@require_http_methods(["GET"])
 def index(request):
     """Render the main page."""
     ciphers = get_all_ciphers()
     return render(request, 'index.html', {'ciphers': ciphers})
 
 
+@require_http_methods(["GET"])
 def learn(request):
     """Render the learn page."""
     ciphers = get_all_ciphers()
@@ -27,18 +29,19 @@ def compare(request):
     return render(request, 'compare.html', {'ciphers': ciphers})
 
 
+@require_http_methods(["GET"])
 def about(request):
     """Render the about page."""
     return render(request, 'about.html')
 
 
+@require_http_methods(["GET"])
 def security(request):
     """Render the security tools page."""
     return render(request, 'security.html')
 
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def encrypt(request):
     """Encrypt plaintext using the specified cipher."""
@@ -79,7 +82,6 @@ def encrypt(request):
         return JsonResponse({'error': f'Encryption failed: {str(e)}'}, status=500)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def decrypt(request):
     """Decrypt ciphertext using the specified cipher."""
@@ -120,6 +122,7 @@ def decrypt(request):
         return JsonResponse({'error': f'Decryption failed: {str(e)}'}, status=500)
 
 
+@require_http_methods(["GET"])
 def get_ciphers(request):
     """Return information about all available ciphers."""
     return JsonResponse(get_all_ciphers())
