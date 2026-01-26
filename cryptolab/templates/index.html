@@ -93,13 +93,20 @@
         }
 
         @keyframes fadeSlideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .hero { 
-            text-align: center; 
-            margin-bottom: 1rem; 
+
+        .hero {
+            text-align: center;
+            margin-bottom: 1rem;
             animation: fadeSlideDown 0.6s ease-out forwards;
         }
 
@@ -127,7 +134,8 @@
             margin-left: auto;
             margin-right: auto;
             animation: fadeSlideDown 0.6s ease-out 0.1s forwards;
-            opacity: 0; /* Start hidden for delay */
+            opacity: 0;
+            /* Start hidden for delay */
         }
 
         .mode-btn {
@@ -419,6 +427,28 @@
         footer a {
             color: var(--accent-tertiary);
             text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 0.75rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
