@@ -217,8 +217,23 @@ jobs:
              DETAILS_FIELD=""
           fi
           
+          # --- Calculate Duration ---
+          # Authenticate gh cli
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          START_TIME=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --json startedAt --jq '.startedAt')
+          
+          # Calculate seconds elapsed
+          START_TS=$(date -d "$START_TIME" +%s)
+          NOW_TS=$(date +%s)
+          DURATION_SEC=$((NOW_TS - START_TS))
+          
+          # Format as Mm Ss
+          MIN=$((DURATION_SEC / 60))
+          SEC=$((DURATION_SEC % 60))
+          DURATION_STR="⏱️ ${MIN}m ${SEC}s"
+          
           # --- Construct Payload ---
-          # Vertical layout with separators
+          # Vertical layout with separators + Duration
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
@@ -239,7 +254,9 @@ jobs:
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DOCKER_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
-                { "name": "", "value": "$DEPLOY_STATUS", "inline": false }
+                { "name": "", "value": "$DEPLOY_STATUS", "inline": false },
+                
+                { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
                 $DETAILS_FIELD
               ],
               "footer": { "text": "Run #${{ github.run_number }} • Triggered by $ACTOR" },
