@@ -128,70 +128,124 @@ jobs:
     if: always()
     
     steps:
-      - name: Download Test Errors
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs: [test, sonarcloud, docker_build]
+    if: always()
+    
+    steps:
+      - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: test-errors
-          path: errors/
+          path: artifacts/
         continue-on-error: true
 
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
+          # --- Metadata ---
           COMMIT_SHA="${{ github.sha }}"
           SHORT_SHA="${COMMIT_SHA:0:7}"
           REPO="${{ github.repository }}"
           BRANCH="${{ github.ref_name }}"
           ACTOR="${{ github.actor }}"
-          WORKFLOW="${{ github.workflow }}"
+          COMMIT_MSG=$(git log -1 --pretty=%B || echo "No commit message")
           RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
           
-          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
-            COLOR=15548997 # Red
-            TITLE="🚫 Pipeline Failed"
-            DESCRIPTION="**Failed Stages:**"
-            
-            if [ "${{ needs.test.result }}" == "failure" ]; then
-              DESCRIPTION="$DESCRIPTION\\n❌ Unit Tests"
-              if [ -f errors/test_error.txt ]; then
-                # Read specific test error
-                ERR_MSG=$(cat errors/test_error.txt | head -n 5)
-                # Escape for JSON
-                ERR_MSG=$(echo "$ERR_MSG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
-                DESCRIPTION="$DESCRIPTION\\n\`\`\`\\n$ERR_MSG\\n\`\`\`"
-              fi
+          # --- Status Icons ---
+          PASS_ICON="✅"
+          FAIL_ICON="❌"
+          SKIP_ICON="⏭️"
+          
+          # --- Stage: Unit Tests ---
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            # Parse coverage from artifact if exists
+            if [ -f artifacts/coverage-report/coverage.xml ]; then
+              # Extract line-rate (e.g., "0.455") and convert to percentage (45%)
+              COV_RATE=$(grep -o 'line-rate="[^"]*"' artifacts/coverage-report/coverage.xml | head -1 | cut -d'"' -f2)
+              COV_PCT=$(echo "$COV_RATE * 100" | bc | cut -d'.' -f1)%
+              TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully ($COV_PCT Coverage)"
+            else
+              TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully"
             fi
-            
-            if [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
-               DESCRIPTION="$DESCRIPTION\\n❌ SonarCloud Analysis\\nQuality Gate Check Failed. [View Report](https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=main)"
-            fi
-            
-            if [ "${{ needs.docker_build.result }}" == "failure" ]; then
-               DESCRIPTION="$DESCRIPTION\\n❌ Docker Build"
-            fi
-            
+          elif [ "${{ needs.test.result }}" == "skipped" ]; then
+            TEST_STATUS="$SKIP_ICON **Unit Tests**\\nSkipped"
           else
-            COLOR=5763719 # Green
-            TITLE="✅ Pipeline Succeeded"
-            DESCRIPTION="All stages completed successfully!"
+            TEST_STATUS="$FAIL_ICON **Unit Tests**\\nFailed"
+            if [ -f artifacts/test-errors/test_error.txt ]; then
+               ERR=$(cat artifacts/test-errors/test_error.txt | head -n 3)
+               # Clean up error message for JSON
+               ERR=$(echo "$ERR" | sed 's/"//g' | sed ':a;N;$!ba;s/\n/ /g')
+               TEST_STATUS="$TEST_STATUS (See failure details below)"
+            fi
           fi
           
-          # Construct JSON Payload with Fields
+          # --- Stage: SonarCloud ---
+          if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
+            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed"
+          elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
+            SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
+          else
+            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed"
+          fi
+          
+          # --- Stage: Docker Build ---
+          if [ "${{ needs.docker_build.result }}" == "success" ]; then
+             DOCKER_STATUS="$PASS_ICON **Docker Build**\\nImage Pushed to Hub"
+             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nTriggered via Render"
+          elif [ "${{ needs.docker_build.result }}" == "skipped" ]; then
+             DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped"
+             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nSkipped"
+          else
+             DOCKER_STATUS="$FAIL_ICON **Docker Build**\\nFailed"
+             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nCancelled"
+          fi
+
+          # --- Overall Status & Color ---
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
+             COLOR=15548997 # Red
+             TITLE="Pipeline Failed"
+             DESC="One or more stages failed to complete."
+             
+             # Append specific error logs if failed
+             DETAILS_FIELD=""
+             if [ -f artifacts/test-errors/test_error.txt ]; then
+                LOG=$(cat artifacts/test-errors/test_error.txt | head -c 1000)
+                LOG=$(echo "$LOG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+                DETAILS_FIELD=",{\"name\": \"Failure Details\", \"value\": \"\`\`\`\\n$LOG\\n\`\`\`\", \"inline\": false}"
+             fi
+          else
+             COLOR=5763719 # Green
+             TITLE="Pipeline Success"
+             DESC="New version deployed successfully! 🚀"
+             DETAILS_FIELD=""
+          fi
+          
+          # --- Construct Payload ---
+          # We use fields to simulate the table/list layout
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
               "title": "$TITLE",
-              "description": "$DESCRIPTION",
+              "description": "$DESC",
               "color": $COLOR,
               "url": "$RUN_URL",
               "fields": [
-                { "name": "Repository", "value": "$REPO", "inline": true },
+                { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
+                { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
                 { "name": "Branch", "value": "$BRANCH", "inline": true },
-                { "name": "Commit", "value": "$SHORT_SHA", "inline": true },
-                { "name": "Author", "value": "$ACTOR", "inline": true },
-                { "name": "Workflow", "value": "$WORKFLOW", "inline": true }
+                
+                { "name": "Stage Summary", "value": "----------------------------------------", "inline": false },
+                
+                { "name": "", "value": "$TEST_STATUS", "inline": true },
+                { "name": "", "value": "$SONAR_STATUS", "inline": true },
+                { "name": "", "value": "$DOCKER_STATUS", "inline": true },
+                { "name": "", "value": "$DEPLOY_STATUS", "inline": true }
+                $DETAILS_FIELD
               ],
+              "footer": { "text": "Run #${{ github.run_number }} • Triggered by $ACTOR" },
               "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }]
           }
