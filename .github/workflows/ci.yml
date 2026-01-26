@@ -39,13 +39,25 @@ jobs:
         id: run_tests
         run: |
           set +e
+          # Run pytest and capture output
           pytest --cov=cryptolab --cov-report=xml --cov-report=term-missing > test_output.txt 2>&1
           EXIT_CODE=$?
           set -e
+          
+          # Print output to console for debugging
           cat test_output.txt
+          
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "Tests failed with exit code $EXIT_CODE" > test_error.txt
-            tail -n 20 test_output.txt >> test_error.txt
+            echo "Unit Tests Failed" > test_error.txt
+            
+            # extract the "short test summary info" section which usually contains the direct cause
+            if grep -q "short test summary info" test_output.txt; then
+               sed -n '/short test summary info/,$p' test_output.txt | head -n 10 >> test_error.txt
+            else
+               # Fallback: Capture lines starting with 'E ' (Pytest error lines)
+               grep "^E " test_output.txt | head -n 5 >> test_error.txt || echo "Check Actions logs for full details" >> test_error.txt
+            fi
+            
             exit $EXIT_CODE
           fi
       
