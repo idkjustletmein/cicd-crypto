@@ -98,21 +98,6 @@
             max-width: 1000px;
             margin: 0 auto;
             padding: 4rem 2rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            align-items: center;
-        }
-
-        .content {
-            animation: fadeSlideDown 0.6s ease-out forwards;
-        }
-
-        .visual {
-            display: flex;
-            justify-content: center;
-            animation: fadeSlideDown 0.6s ease-out 0.2s forwards;
-            opacity: 0;
         }
 
         h1 {
@@ -120,6 +105,7 @@
             text-align: center;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
+            animation: fadeSlideDown 0.6s ease-out forwards;
         }
 
         .subtitle {
@@ -127,12 +113,16 @@
             color: var(--text-secondary);
             margin-bottom: 1.5rem;
             font-size: 0.95rem;
+            animation: fadeSlideDown 0.6s ease-out 0.1s forwards;
+            opacity: 0;
         }
 
         .about-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
+            animation: fadeSlideDown 0.6s ease-out 0.2s forwards;
+            opacity: 0;
         }
 
         @media (max-width: 700px) {
