@@ -36,9 +36,26 @@ jobs:
           pip install -r requirements.txt
       
       - name: Run tests with coverage
+        id: run_tests
         run: |
-          pytest --cov=cryptolab --cov-report=xml --cov-report=term-missing
+          set +e
+          pytest --cov=cryptolab --cov-report=xml --cov-report=term-missing > test_output.txt 2>&1
+          EXIT_CODE=$?
+          set -e
+          cat test_output.txt
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Tests failed with exit code $EXIT_CODE" > test_error.txt
+            tail -n 20 test_output.txt >> test_error.txt
+            exit $EXIT_CODE
+          fi
       
+      - name: Upload Test Errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-errors
+          path: test_error.txt
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -77,7 +94,20 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.wait=true > sonar_output.txt 2>&1 || (
+              echo "SonarCloud Analysis Failed" > sonar_error.txt &&
+              grep "QUALITY GATE STATUS: FAILED" sonar_output.txt >> sonar_error.txt || echo "Check SonarCloud dashboard for details" >> sonar_error.txt &&
+              cat sonar_output.txt &&
+              exit 1
+            )
+            cat sonar_output.txt
+
+      - name: Upload SonarCloud Errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-errors
+          path: sonar_error.txt
 
   docker_build:
     name: Docker Build
@@ -109,37 +139,64 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, sonarcloud, docker_build]
     if: always()
-
+    
     steps:
+      - name: Download Test Errors
+        uses: actions/download-artifact@v4
+        with:
+          name: test-errors
+          path: errors/
+        continue-on-error: true
+
+      - name: Download SonarCloud Errors
+        uses: actions/download-artifact@v4
+        with:
+          name: sonar-errors
+          path: errors/
+        continue-on-error: true
+
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           FAILED_JOBS=""
+          ERROR_DETAILS=""
           
           if [ "${{ needs.test.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n- Unit Tests"
+            FAILED_JOBS="$FAILED_JOBS\\n❌ **Unit Tests**"
+            if [ -f errors/test_error.txt ]; then
+              DETAIL=$(cat errors/test_error.txt)
+              ERROR_DETAILS="${ERROR_DETAILS}\\n**Tests Failed:**\\n\`\`\`\\n${DETAIL}\\n\`\`\`"
+            fi
           fi
           
           if [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n- SonarCloud Analysis"
+            FAILED_JOBS="$FAILED_JOBS\\n❌ **SonarCloud Analysis**"
+            if [ -f errors/sonar_error.txt ]; then
+              DETAIL=$(cat errors/sonar_error.txt)
+              ERROR_DETAILS="${ERROR_DETAILS}\\n**Quality Gate Failed:**\\n\`\`\`\\n${DETAIL}\\n\`\`\`"
+            fi
           fi
           
           if [ "${{ needs.docker_build.result }}" == "failure" ]; then
-            FAILED_JOBS="$FAILED_JOBS\\n- Docker Build"
+            FAILED_JOBS="$FAILED_JOBS\\n❌ **Docker Build**"
+            ERROR_DETAILS="${ERROR_DETAILS}\\n**Docker Build Failed**"
           fi
           
           if [ -n "$FAILED_JOBS" ]; then
             COLOR=15548997
-            TITLE="Pipeline Failed"
-            DESCRIPTION="The pipeline failed in the following stages:${FAILED_JOBS}"
+            TITLE="🚫 Pipeline Failed"
+            DESCRIPTION="**Failed Stages:**${FAILED_JOBS}\\n${ERROR_DETAILS}"
           else
             COLOR=5763719
-            TITLE="Pipeline Success"
-            DESCRIPTION="All stages passed successfully! 🚀"
+            TITLE="✅ Pipeline Success"
+            DESCRIPTION="**All systems go!** 🚀\\n\\n- Unit Tests passed\\n- Quality Gate passed\\n- Docker Image built & pushed\\n- Deployment triggered"
           fi
           
+          # Escape output for JSON
+          DESCRIPTION=$(echo "$DESCRIPTION" | sed 's/"/\\"/g' | tr -d '\r')
+          
           curl -H "Content-Type: application/json" \
-               -d "{\"embeds\": [{\"title\": \"$TITLE\", \"description\": \"$DESCRIPTION\", \"color\": $COLOR, \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}]}" \
+               -d "{\"embeds\": [{\"title\": \"$TITLE\", \"description\": \"$DESCRIPTION\", \"color\": $COLOR, \"url\": \"https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\", \"footer\": {\"text\": \"CryptoLab CI/CD • Run #${{ github.run_number }}\"}}]}" \
                "$DISCORD_WEBHOOK"
 
