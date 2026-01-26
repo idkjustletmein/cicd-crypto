@@ -151,7 +151,7 @@ jobs:
           
           # --- Links ---
           SONAR_URL="https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=$BRANCH"
-          DOCKER_URL="https://hub.docker.com/r/$DOCKER_USERNAME/cryptolab"
+          DOCKER_URL="https://hub.docker.com/repository/docker/idkjustletmein/cryptolab/general"
           RENDER_URL="https://cryptolab-sxo4.onrender.com"
           
           # --- Status Icons ---
