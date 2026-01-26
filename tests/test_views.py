@@ -123,7 +123,7 @@ class TestCiphersAPIView:
     def test_learn_view(self, client):
         """Test the learn view returns 200."""
         response = client.get('/learn/')
-        assert response.status_code == 200
+        assert response.status_code == 500 # INTENTIONAL FAILURE FOR DEMO
         assert b"Learn Cryptography" in response.content
 
     def test_about_view(self, client):
