@@ -1,56 +1,51 @@
-# 🔐 CryptoLab - CI/CD Pipeline Demo
+# 🔐 CryptoLab
 
-A Django web application featuring 18 classical and modern cryptographic ciphers, designed as a demo project for CI/CD pipeline implementation.
+An interactive web application for learning and experimenting with classical and modern cryptographic ciphers.
 
-![CI/CD Pipeline](https://github.com/YOUR_USERNAME/cicd-crypto/actions/workflows/ci.yml/badge.svg)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://cryptolab-sxo4.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://python.org)
+[![Django](https://img.shields.io/badge/Django-4.2-green)](https://djangoproject.com)
 
-## 🎯 Features
+## ✨ Features
 
-<<<<<<< Updated upstream
-- **11 Classical Ciphers**: Caesar, Vigenère, Autokey, One-Time Pad, Hill, Affine, Multiplicative, Playfair, Vernam, Rail Fence, Columnar Transposition
-- **Modern UI**: Dark theme with animated background
-- **Encrypt & Decrypt**: Full bidirectional support
-- **Educational**: Step-by-step examples for each cipher
-- **Security Ratings**: Visual strength indicators for measurement purposes
-=======
-### Classical Ciphers (12)
-- **Caesar** - Simple letter shift
-- **Additive** - Modular addition cipher
-- **Multiplicative** - Modular multiplication cipher
-- **Affine** - Combines multiplicative and additive
-- **Vigenère** - Polyalphabetic substitution
-- **Hill** - Matrix-based encryption
-- **Autokey** - Self-extending key cipher
-- **Playfair** - Digraph substitution
-- **One-Time Pad** - Theoretically unbreakable
-- **Vernam** - XOR-based cipher
-- **Rail Fence** - Zigzag transposition
-- **Columnar Transposition** - Column-based rearrangement
+### 🔑 Encryption Tools
+Encrypt and decrypt text using **11 classical ciphers**:
 
-### Modern Ciphers (4)
-- **Feistel** - Block cipher structure
-- **DES** - Data Encryption Standard
-- **AES** - Advanced Encryption Standard
-- **RSA** - Asymmetric public-key encryption
+| Cipher | Type | Description |
+|--------|------|-------------|
+| Caesar | Substitution | Simple letter shift |
+| Vigenère | Polyalphabetic | Keyword-based substitution |
+| Affine | Substitution | Combines multiplication and addition |
+| Multiplicative | Substitution | Modular multiplication |
+| Autokey | Polyalphabetic | Self-extending key |
+| Playfair | Digraph | 5×5 matrix substitution |
+| Hill | Matrix | Linear algebra encryption |
+| One-Time Pad | Stream | Theoretically unbreakable |
+| Vernam | Stream | XOR-based cipher |
+| Rail Fence | Transposition | Zigzag pattern |
+| Columnar | Transposition | Column rearrangement |
 
-### Hash Functions (2)
-- **Hashing** - MD5, SHA-1, SHA-256, SHA-512
-- **SHA-1** - Dedicated SHA-1 hasher
->>>>>>> Stashed changes
+### 📚 Learn Page
+Interactive explanations for each cipher with:
+- Algorithm breakdown
+- Visual examples
+- Security strength indicators
+- "Try It" buttons linking to the encryption tool
 
-## 🚀 CI/CD Pipeline
+### 🛡️ Security Tools
+- **Password Exposure Check**: Verify if your password has appeared in data breaches using the [Have I Been Pwned](https://haveibeenpwned.com/) API with **k-anonymity** (your password is never sent over the network).
 
-| Stage | Tool | Status |
-|-------|------|--------|
-| Unit Testing | pytest | ✅ Active |
-| Code Coverage | pytest-cov | ✅ Active |
-| Quality Analysis | SonarCloud | ✅ Active |
+### 🎨 Modern UI
+- Glassmorphism design with dark theme
+- Smooth fade-in animations
+- Fully responsive (mobile-friendly)
+- Operation history tracking
 
-## 📋 Quick Start
+## 🚀 Quick Start
 
 ```bash
-# Clone and setup
-git clone https://github.com/YOUR_USERNAME/cicd-crypto.git
+# Clone the repository
+git clone https://github.com/idkjustletmein/cicd-crypto.git
 cd cicd-crypto
 
 # Create virtual environment
@@ -60,63 +55,51 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the app
+# Run the development server
 python manage.py runserver
-# Visit http://127.0.0.1:8000
 
-# Run tests
-pytest
-pytest --cov=cryptolab --cov-report=html
+# Open http://127.0.0.1:8000 in your browser
 ```
-
-## 🔧 GitHub Setup
-
-### 1. Add Repository Secret
-Go to Settings → Secrets → Actions → New repository secret:
-- Name: `SONAR_TOKEN`
-- Value: Your SonarCloud token
-
-### 2. Update SonarCloud Config
-Edit `sonar-project.properties`:
-```properties
-sonar.organization=your-github-username
-sonar.projectKey=your-github-username_cicd-crypto
-```
-
-### 3. Branch Protection (Optional)
-Settings → Branches → Add rule for `main`:
-- ✅ Require status checks: `Unit Tests`, `SonarCloud Analysis`
 
 ## 📁 Project Structure
 
 ```
 cicd-crypto/
-├── .github/workflows/ci.yml    # CI/CD pipeline
 ├── cryptolab/
-│   ├── ciphers/                # All cipher implementations
+│   ├── ciphers/           # Cipher implementations
 │   │   ├── caesar.py
-│   │   ├── aes.py
-│   │   ├── rsa.py
-│   │   └── ... (18 ciphers)
-│   ├── templates/index.html    # Web UI
-│   ├── views.py
-│   └── settings.py
-├── tests/
-│   ├── test_ciphers.py         # 61 unit tests
-│   └── conftest.py
+│   │   ├── vigenere.py
+│   │   ├── hill.py
+│   │   └── ... (11 ciphers)
+│   ├── templates/
+│   │   ├── index.html     # Main encryption tool
+│   │   ├── learn.html     # Educational content
+│   │   ├── security.html  # Password checker
+│   │   └── about.html     # Project info
+│   └── views.py           # API endpoints
+├── tests/                 # Unit tests
 ├── requirements.txt
-├── pytest.ini
-└── sonar-project.properties
+└── manage.py
 ```
 
-## 🧪 Test Coverage
+## 🧪 Running Tests
 
-All 18 ciphers have comprehensive tests verifying:
-- Encryption functionality
-- Decryption functionality  
-- Encrypt-decrypt roundtrip
-- Key validation
-- Edge cases
+```bash
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=cryptolab --cov-report=html
+```
+
+## 🌐 Live Demo
+
+Visit the live application: **[cryptolab-sxo4.onrender.com](https://cryptolab-sxo4.onrender.com)**
+
+## 📄 License
+
+This project is open source and available for educational purposes.
 
 ---
-Built for learning CI/CD pipelines 🎓
+
+Built with ❤️ for cryptography enthusiasts
