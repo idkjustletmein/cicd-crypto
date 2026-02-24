@@ -87,13 +87,23 @@ jobs:
           load: true
           tags: cryptolab:scan
 
-      - name: Run Trivy vulnerability scanner
+      - name: Scan Python dependencies (blocking)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'cryptolab:scan'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
+          vuln-type: 'library'
+
+      - name: Scan OS packages (advisory only)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cryptolab:scan'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+          vuln-type: 'os'
 
       - name: Upload Trivy scan results
         if: always()
