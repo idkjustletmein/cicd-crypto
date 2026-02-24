@@ -1,0 +1,231 @@
+name: Development Pipeline
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run tests with coverage
+        id: run_tests
+        run: |
+          set +e
+          pytest --cov=cryptolab --cov-report=xml --cov-report=term-missing > test_output.txt 2>&1
+          EXIT_CODE=$?
+          set -e
+          
+          cat test_output.txt
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Unit Tests Failed" > test_error.txt
+            
+            if grep -q "short test summary info" test_output.txt; then
+               sed -n '/short test summary info/,$p' test_output.txt | head -n 10 >> test_error.txt
+            else
+               grep "^E " test_output.txt | head -n 5 >> test_error.txt || echo "Check Actions logs for full details" >> test_error.txt
+            fi
+            
+            exit $EXIT_CODE
+          fi
+      
+      - name: Upload Test Errors
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-errors
+          path: test_error.txt
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run tests with coverage for SonarCloud
+        run: |
+          pytest --cov=cryptolab --cov-report=xml
+      
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
+
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs: [test, sonarcloud]
+    if: always()
+    
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+        continue-on-error: true
+
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          # --- Metadata ---
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          COMMIT_MSG=$(git log -1 --pretty=%B || echo "No commit message")
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          
+          # --- Links ---
+          SONAR_URL="https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=$BRANCH"
+          
+          # --- Status Icons ---
+          PASS_ICON="✅"
+          FAIL_ICON="❌"
+          SKIP_ICON="⏭️"
+          
+          # --- Stage: Unit Tests ---
+          if [ "${{ needs.test.result }}" == "success" ]; then
+            if [ -f artifacts/coverage-report/coverage.xml ]; then
+              COV_RATE=$(grep -o 'line-rate="[^"]*"' artifacts/coverage-report/coverage.xml | head -1 | cut -d'"' -f2)
+              COV_PCT=$(echo "$COV_RATE * 100" | bc | cut -d'.' -f1)%
+              TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully ($COV_PCT Coverage)"
+            else
+              TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully"
+            fi
+          elif [ "${{ needs.test.result }}" == "skipped" ]; then
+            TEST_STATUS="$SKIP_ICON **Unit Tests**\\nSkipped"
+          else
+            TEST_STATUS="$FAIL_ICON **Unit Tests**\\nFailed"
+            if [ -f artifacts/test-errors/test_error.txt ]; then
+               ERR=$(cat artifacts/test-errors/test_error.txt | head -n 3)
+               ERR=$(echo "$ERR" | sed 's/"//g' | sed ':a;N;$!ba;s/\n/ /g')
+               TEST_STATUS="$TEST_STATUS (See failure details below)"
+            fi
+          fi
+          
+          # --- Stage: SonarCloud ---
+          if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
+            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed\\n[View Dashboard]($SONAR_URL)"
+          elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
+            SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
+          else
+            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
+          fi
+
+          # --- Overall Status & Color ---
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
+             COLOR=15548997 # Red
+             TITLE="⚙️ Dev Pipeline Failed"
+             DESC="One or more stages failed on the **develop** branch."
+             
+             DETAILS_FIELD=""
+             if [ -f artifacts/test-errors/test_error.txt ]; then
+                LOG=$(cat artifacts/test-errors/test_error.txt | head -c 1000)
+                LOG=$(echo "$LOG" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+                DETAILS_FIELD=",{\"name\": \"Failure Details\", \"value\": \"\`\`\`\\n$LOG\\n\`\`\`\", \"inline\": false}"
+             fi
+          else
+             COLOR=5763719 # Green
+             TITLE="⚙️ Dev Pipeline Passed"
+             DESC="All checks passed on **develop** ✅"
+             DETAILS_FIELD=""
+          fi
+          
+          # --- Calculate Duration ---
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          START_TIME=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --json startedAt --jq '.startedAt')
+          
+          START_TS=$(date -d "$START_TIME" +%s)
+          NOW_TS=$(date +%s)
+          DURATION_SEC=$((NOW_TS - START_TS))
+          
+          MIN=$((DURATION_SEC / 60))
+          SEC=$((DURATION_SEC % 60))
+          DURATION_STR="⏱️ ${MIN}m ${SEC}s"
+          
+          # --- Construct Payload ---
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "$TITLE",
+              "description": "$DESC",
+              "color": $COLOR,
+              "url": "$RUN_URL",
+              "fields": [
+                { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
+                { "name": "Branch", "value": "$BRANCH", "inline": true },
+                { "name": "Commit", "value": "[$SHORT_SHA]($RUN_URL)", "inline": true },
+                
+                { "name": "Stage Summary", "value": "────────────────────────────────────────", "inline": false },
+                
+                { "name": "", "value": "$TEST_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$SONAR_STATUS", "inline": false },
+                
+                { "name": "", "value": "────────────────────────────────────────", "inline": false },
+                { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
+                $DETAILS_FIELD
+              ],
+              "footer": { "text": "Dev Pipeline • Run #${{ github.run_number }} • Triggered by $ACTOR" },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+          
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
