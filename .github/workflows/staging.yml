@@ -1,9 +1,7 @@
-name: CI/CD Pipeline
+name: Staging Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main ]
 
 jobs:
@@ -39,22 +37,18 @@ jobs:
         id: run_tests
         run: |
           set +e
-          # Run pytest and capture output
           pytest --cov=cryptolab --cov-report=xml --cov-report=term-missing > test_output.txt 2>&1
           EXIT_CODE=$?
           set -e
           
-          # Print output to console for debugging
           cat test_output.txt
           
           if [ $EXIT_CODE -ne 0 ]; then
             echo "Unit Tests Failed" > test_error.txt
             
-            # extract the "short test summary info" section which usually contains the direct cause
             if grep -q "short test summary info" test_output.txt; then
                sed -n '/short test summary info/,$p' test_output.txt | head -n 10 >> test_error.txt
             else
-               # Fallback: Capture lines starting with 'E ' (Pytest error lines)
                grep "^E " test_output.txt | head -n 5 >> test_error.txt || echo "Check Actions logs for full details" >> test_error.txt
             fi
             
@@ -108,10 +102,45 @@ jobs:
           args: >
             -Dsonar.qualitygate.wait=true
 
-  docker_build:
-    name: Docker Build
+  security_scan:
+    name: Container Security Scan
     runs-on: ubuntu-latest
     needs: sonarcloud
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: cryptolab:scan
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cryptolab:scan'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-results.sarif
+        continue-on-error: true
+
+  docker_build:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: security_scan
     
     steps:
       - name: Checkout code
@@ -133,12 +162,10 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cryptolab:latest
 
-
-
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [test, sonarcloud, docker_build]
+    needs: [test, sonarcloud, security_scan, docker_build]
     if: always()
     
     steps:
@@ -174,9 +201,7 @@ jobs:
           
           # --- Stage: Unit Tests ---
           if [ "${{ needs.test.result }}" == "success" ]; then
-            # Parse coverage from artifact if exists
             if [ -f artifacts/coverage-report/coverage.xml ]; then
-              # Extract line-rate (e.g., "0.455") and convert to percentage (45%)
               COV_RATE=$(grep -o 'line-rate="[^"]*"' artifacts/coverage-report/coverage.xml | head -1 | cut -d'"' -f2)
               COV_PCT=$(echo "$COV_RATE * 100" | bc | cut -d'.' -f1)%
               TEST_STATUS="$PASS_ICON **Unit Tests**\\nExecuted successfully ($COV_PCT Coverage)"
@@ -189,7 +214,6 @@ jobs:
             TEST_STATUS="$FAIL_ICON **Unit Tests**\\nFailed"
             if [ -f artifacts/test-errors/test_error.txt ]; then
                ERR=$(cat artifacts/test-errors/test_error.txt | head -n 3)
-               # Clean up error message for JSON
                ERR=$(echo "$ERR" | sed 's/"//g' | sed ':a;N;$!ba;s/\n/ /g')
                TEST_STATUS="$TEST_STATUS (See failure details below)"
             fi
@@ -202,6 +226,15 @@ jobs:
             SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
           else
             SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
+          fi
+
+          # --- Stage: Security Scan ---
+          if [ "${{ needs.security_scan.result }}" == "success" ]; then
+            SECURITY_STATUS="$PASS_ICON **Container Security (Trivy)**\\nNo CRITICAL/HIGH vulnerabilities found"
+          elif [ "${{ needs.security_scan.result }}" == "skipped" ]; then
+            SECURITY_STATUS="$SKIP_ICON **Container Security (Trivy)**\\nSkipped"
+          else
+            SECURITY_STATUS="$FAIL_ICON **Container Security (Trivy)**\\nVulnerabilities detected — image push blocked"
           fi
           
           # --- Stage: Docker Build ---
@@ -217,12 +250,11 @@ jobs:
           fi
 
           # --- Overall Status & Color ---
-          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ] || [ "${{ needs.security_scan.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
              COLOR=15548997 # Red
-             TITLE="Pipeline Failed"
-             DESC="One or more stages failed to complete."
+             TITLE="🚀 Staging Pipeline Failed"
+             DESC="One or more stages failed. Deployment blocked."
              
-             # Append specific error logs if failed
              DETAILS_FIELD=""
              if [ -f artifacts/test-errors/test_error.txt ]; then
                 LOG=$(cat artifacts/test-errors/test_error.txt | head -c 1000)
@@ -231,28 +263,24 @@ jobs:
              fi
           else
              COLOR=5763719 # Green
-             TITLE="Pipeline Success"
-             DESC="New version deployed successfully! 🚀"
+             TITLE="🚀 Staging Pipeline Success"
+             DESC="New version deployed successfully! 🎉"
              DETAILS_FIELD=""
           fi
           
           # --- Calculate Duration ---
-          # Authenticate gh cli
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
           START_TIME=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --json startedAt --jq '.startedAt')
           
-          # Calculate seconds elapsed
           START_TS=$(date -d "$START_TIME" +%s)
           NOW_TS=$(date +%s)
           DURATION_SEC=$((NOW_TS - START_TS))
           
-          # Format as Mm Ss
           MIN=$((DURATION_SEC / 60))
           SEC=$((DURATION_SEC % 60))
           DURATION_STR="⏱️ ${MIN}m ${SEC}s"
           
           # --- Construct Payload ---
-          # Vertical layout with separators + Duration
           PAYLOAD=$(cat <<EOF
           {
             "embeds": [{
@@ -271,6 +299,8 @@ jobs:
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$SONAR_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$SECURITY_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DOCKER_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DEPLOY_STATUS", "inline": false },
@@ -279,7 +309,7 @@ jobs:
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
                 $DETAILS_FIELD
               ],
-              "footer": { "text": "Run #${{ github.run_number }} • Triggered by $ACTOR" },
+              "footer": { "text": "Staging Pipeline • Run #${{ github.run_number }} • Triggered by $ACTOR" },
               "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }]
           }
@@ -287,4 +317,3 @@ jobs:
           )
           
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
-
