@@ -132,7 +132,6 @@ jobs:
           RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
           
           # --- Links ---
-          SONAR_URL="https://sonarcloud.io/dashboard?id=idkjustletmein_cicd-crypto&branch=$BRANCH"
           
           # --- Status Icons ---
           PASS_ICON="✅"
@@ -159,17 +158,10 @@ jobs:
             fi
           fi
           
-          # --- Stage: SonarCloud ---
-          if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
-            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed\\n[View Dashboard]($SONAR_URL)"
-          elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
-            SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
-          else
-            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n[View Dashboard]($SONAR_URL)"
-          fi
+
 
           # --- Overall Status & Color ---
-          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
+          if [ "${{ needs.test.result }}" == "failure" ]; then
              COLOR=15548997 # Red
              TITLE="⚙️ Dev Pipeline Failed"
              DESC="One or more stages failed on the **develop** branch."
@@ -215,8 +207,6 @@ jobs:
                 { "name": "Stage Summary", "value": "────────────────────────────────────────", "inline": false },
                 
                 { "name": "", "value": "$TEST_STATUS", "inline": false },
-                { "name": "", "value": "🔹", "inline": false },
-                { "name": "", "value": "$SONAR_STATUS", "inline": false },
                 
                 { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
