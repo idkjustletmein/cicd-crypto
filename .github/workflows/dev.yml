@@ -108,7 +108,7 @@ jobs:
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [test, sonarcloud]
+    needs: [test]
     if: always()
     
     steps:
