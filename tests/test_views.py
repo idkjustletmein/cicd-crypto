@@ -138,9 +138,3 @@ class TestCiphersAPIView:
         assert response.status_code == 200
         assert b"Password Security Check" in response.content
 
-    def test_status_view(self, client):
-        """Test the status view returns 200."""
-        response = client.get('/status/')
-        assert response.status_code == 200
-        assert b"Pipeline Status" in response.content
-

@@ -8,7 +8,6 @@ urlpatterns = [
     path('learn/', views.learn, name='learn'),
     path('about/', views.about, name='about'),
     path('security/', views.security, name='security'),
-    path('status/', views.status, name='status'),
     path('encrypt/', views.encrypt, name='encrypt'),
     path('decrypt/', views.decrypt, name='decrypt'),
     path('api/ciphers/', views.get_ciphers, name='get_ciphers'),

@@ -1,0 +1,102 @@
+# .upptimerc.yml
+
+owner: idkjustletmein
+repo: cryptolab-status
+
+sites:
+  - name: CryptoLab API
+    url: https://cryptolab-sxo4.onrender.com/api/ciphers/
+
+status-website:
+  # Customize the theme colors (matches CryptoLab scheme)
+  theme: dark
+  css: |
+    :root {
+      --color-primary: #6366f1;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --bg-color: #0a0a1a;
+      --text-color: #f1f5f9;
+    }
+    body { font-family: 'Inter', sans-serif; }
+    
+  # Add custom links to the navigation bar
+  navbar:
+    - title: Main Project
+      href: https://cryptolab-sxo4.onrender.com
+    - title: GitHub Repository
+      href: https://github.com/idkjustletmein/cicd-crypto
+    - title: Docker Hub
+      href: https://hub.docker.com/repository/docker/idkjustletmein/cryptolab/general
+
+  # Custom HTML to display the exact same extra information from your old status page!
+  customBodyHtml: |
+    <div style="max-width: 900px; margin: 40px auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      
+      <!-- Build Badges -->
+      <div style="background: rgba(30, 30, 60, 0.6); padding: 20px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3);">
+        <h3 style="color: #06b6d4; margin-top: 0; font-size: 1.1em;">🏷️ Build Badges</h3>
+        <p><img src="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dev.yml/badge.svg" alt="Dev Pipeline"> <strong>Dev Pipeline</strong></p>
+        <p><img src="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/staging.yml/badge.svg" alt="Staging Pipeline"> <strong>Staging Pipeline</strong></p>
+        <p><img src="https://sonarcloud.io/api/project_badges/measure?project=idkjustletmein_cicd-crypto&metric=alert_status" alt="Quality Gate"> <strong>Quality Gate</strong></p>
+        <p><img src="https://sonarcloud.io/api/project_badges/measure?project=idkjustletmein_cicd-crypto&metric=coverage" alt="Coverage"> <strong>Coverage</strong></p>
+        <p><img src="https://sonarcloud.io/api/project_badges/measure?project=idkjustletmein_cicd-crypto&metric=security_rating" alt="Security Rating"> <strong>Security Rating</strong></p>
+      </div>
+
+      <!-- Pipeline Stages -->
+      <div style="background: rgba(30, 30, 60, 0.6); padding: 20px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3);">
+        <h3 style="color: #06b6d4; margin-top: 0; font-size: 1.1em;">⚙️ Pipeline Architecture</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li>🧪 <strong>Unit Tests:</strong> pytest + coverage</li>
+          <li>🔍 <strong>SonarCloud:</strong> Quality gate</li>
+          <li>🛡️ <strong>Trivy Scan:</strong> Container CVEs</li>
+          <li>🐳 <strong>Docker Build:</strong> Push to Hub</li>
+          <li>🚀 <strong>Deploy:</strong> Render auto-deploy</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Secret Management -->
+    <div style="max-width: 900px; margin: 20px auto; background: rgba(30, 30, 60, 0.6); padding: 20px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3);">
+      <h3 style="color: #06b6d4; margin-top: 0; font-size: 1.1em;">🔒 Secret Management</h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <tr style="text-align: left; border-bottom: 1px solid rgba(99, 102, 241, 0.3);">
+          <th>Secret Name</th><th>Purpose</th><th>Used In</th><th>Status</th>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.3);">
+          <td style="color: #6366f1; font-family: monospace;">SONAR_TOKEN</td>
+          <td>Authenticate with SonarCloud API</td><td>Both pipelines</td>
+          <td><span style="color: #10b981;">🔐 Encrypted</span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.3);">
+          <td style="color: #6366f1; font-family: monospace;">DOCKERHUB_USERNAME</td>
+          <td>Docker Hub account identifier</td><td>Staging pipeline</td>
+          <td><span style="color: #10b981;">🔐 Encrypted</span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.3);">
+          <td style="color: #6366f1; font-family: monospace;">DOCKERHUB_TOKEN</td>
+          <td>Docker Hub access token</td><td>Staging pipeline</td>
+          <td><span style="color: #10b981;">🔐 Encrypted</span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid rgba(99, 102, 241, 0.3);">
+          <td style="color: #6366f1; font-family: monospace;">DISCORD_WEBHOOK</td>
+          <td>Send pipeline notifications</td><td>Both pipelines</td>
+          <td><span style="color: #10b981;">🔐 Encrypted</span></td>
+        </tr>
+        <tr>
+          <td style="color: #6366f1; font-family: monospace;">GITHUB_TOKEN</td>
+          <td>Auto-provided by Actions</td><td>Both pipelines</td>
+          <td><span style="color: #10b981;">🔐 Auto</span></td>
+        </tr>
+      </table>
+    </div>
+
+i18n:
+  activeIncidents: Active Incidents
+  allSystemsOperational: All systems are operational
+
+# Ignore specific URL parameters or status codes
+assignees:
+  - idkjustletmein

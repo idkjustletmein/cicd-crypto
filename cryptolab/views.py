@@ -41,12 +41,6 @@ def security(request):
     return render(request, 'security.html')
 
 
-@require_http_methods(["GET"])
-def status(request):
-    """Render the pipeline status & monitoring page."""
-    return render(request, 'status.html')
-
-
 @require_http_methods(["POST"])
 def encrypt(request):
     """Encrypt plaintext using the specified cipher."""
