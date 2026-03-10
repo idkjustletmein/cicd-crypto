@@ -204,6 +204,19 @@ jobs:
             fi
           fi
           
+          # --- Stage: SonarCloud (Only for PRs) ---
+          SONAR_FIELD=""
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
+              SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed"
+            elif [ "${{ needs.sonarcloud.result }}" == "skipped" ]; then
+              SONAR_STATUS="$SKIP_ICON **SonarCloud**\\nSkipped"
+            else
+              SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed"
+            fi
+            SONAR_FIELD=",{\"name\": \"\", \"value\": \"🔹\", \"inline\": false}, {\"name\": \"\", \"value\": \"$SONAR_STATUS\", \"inline\": false}"
+          fi
+          
 
 
           # --- Overall Status & Color ---
@@ -254,7 +267,8 @@ jobs:
                 { "name": "📝 Commit", "value": "$COMMIT_MSG", "inline": false },
                 { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 
-                { "name": "", "value": "$TEST_STATUS", "inline": false },
+                { "name": "", "value": "$TEST_STATUS", "inline": false }
+                $SONAR_FIELD,
                 
                 { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
