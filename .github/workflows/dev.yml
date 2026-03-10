@@ -125,7 +125,7 @@ jobs:
 
       - name: Create or update PR and enable auto-merge
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           # Check if a PR already exists
           EXISTING_PR=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number' || echo "")
