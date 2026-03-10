@@ -1,13 +1,11 @@
 name: Staging Pipeline
 
 env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  workflow_run:
-    workflows: ["Development Pipeline"]
-    types:
-      - completed
+  push:
     branches: [main]
 
 jobs:
