@@ -5,6 +5,7 @@ on:
     branches: [ develop ]
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
@@ -115,7 +116,7 @@ jobs:
     name: Auto PR to Main
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     
     steps:
       - name: Checkout code
