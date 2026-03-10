@@ -107,10 +107,46 @@ jobs:
           args: >
             -Dsonar.qualitygate.wait=true
 
+  auto_pr:
+    name: Auto PR to Main
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create or update PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if a PR already exists
+          EXISTING_PR=$(gh pr list --base main --head develop --state open --json number --jq '.[0].number' || echo "")
+          
+          if [ -z "$EXISTING_PR" ]; then
+            # Create new PR
+            PR_URL=$(gh pr create \
+              --title "Auto: merge develop → main" \
+              --body "Automated PR created by Dev Pipeline after tests passed on commit ${{ github.sha }}." \
+              --base main \
+              --head develop)
+            echo "Created PR: $PR_URL"
+            PR_NUMBER=$(echo "$PR_URL" | grep -o '[0-9]*$')
+          else
+            echo "PR #$EXISTING_PR already exists, skipping creation."
+            PR_NUMBER=$EXISTING_PR
+          fi
+          
+          # Enable auto-merge (squash) so it merges when checks pass
+          gh pr merge $PR_NUMBER --auto --squash || echo "Auto-merge already enabled or not available."
+
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [test, sonarcloud]
+    needs: [test, sonarcloud, auto_pr]
     if: always()
     
     steps:
