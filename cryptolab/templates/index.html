@@ -40,6 +40,36 @@
                 radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
         }
 
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.06;
+            pointer-events: none;
+        }
+
+        nav, .container, .site-footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        .site-footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .site-footer .ps-text {
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+            opacity: 0.5;
+            font-style: italic;
+        }
+
         nav {
             display: flex;
             justify-content: space-between;
@@ -454,6 +484,7 @@
 </head>
 
 <body>
+    <canvas id="matrix-canvas"></canvas>
     <nav>
         <div class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -711,6 +742,47 @@
             if (history.length === 0) { historyLog.innerHTML = '<div class="history-empty">No operations yet</div>'; return; }
             historyLog.innerHTML = history.map(h => `<div class="history-item"><span class="history-time">[${h.timestamp}]</span> <span class="history-mode">${h.mode}</span> (${h.cipher}): ${h.input} → <span class="history-result">${h.result}</span></div>`).join('');
         }
+    </script>
+
+    <div class="site-footer">
+        <p class="ps-text">PS: we don't really know what we're doing &lt;3</p>
+    </div>
+
+    <script>
+        // Matrix digit rain
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 26, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#6366f1';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = Math.random() > 0.5 ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * 10);
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
     </script>
 </body>
 
