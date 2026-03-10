@@ -12,6 +12,7 @@ permissions:
   pull-requests: write
 
 env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -154,16 +155,34 @@ jobs:
             echo "PR #$EXISTING_PR already exists, skipping creation."
             PR_NUMBER=$EXISTING_PR
           fi
-          
-          # Enable auto-merge (squash) so it merges when checks pass
-          gh pr merge $PR_NUMBER --auto --squash || echo "Auto-merge already enabled or not available."
+  auto_merge_pr:
+    name: Auto Merge PR
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    needs: [test, sonarcloud]
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          # Wait a moment for GitHub to sync statuses
+          sleep 5
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          echo "Merging PR #$PR_NUMBER..."
+          gh pr merge $PR_NUMBER --squash --admin || gh pr merge $PR_NUMBER --squash
 
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    needs: [test, sonarcloud, auto_pr]
+    needs: [test, sonarcloud, auto_pr, auto_merge_pr]
     if: always()
     
     steps:
