@@ -23,9 +23,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 # Copy the project code into the container
 COPY . .
 
+# Collect static files and create media dir
+RUN python manage.py collectstatic --noinput || true
+RUN mkdir -p /app/media/key_files
+
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Run the application
-# Using 0.0.0.0 to make it accessible outside the container
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run migrations and start the server
+CMD python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000
