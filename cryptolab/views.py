@@ -13,6 +13,8 @@ from .ciphers import get_cipher, get_all_ciphers
 from .forms import RegisterForm, KeyFileUploadForm
 from .models import CryptoHistory, UploadedKeyFile
 
+INVALID_JSON_ERROR = 'Invalid JSON'
+
 
 @require_http_methods(["GET"])
 def index(request):
@@ -146,7 +148,7 @@ def api_delete_history(request):
         entry.delete()
         return JsonResponse({'success': True})
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({'error': INVALID_JSON_ERROR}, status=400)
 
 
 # ─── File Upload Views ─────────────────────────────────────────────

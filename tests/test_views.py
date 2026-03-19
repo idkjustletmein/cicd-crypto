@@ -173,6 +173,23 @@ class TestAuthViews:
         assert response.status_code == 302
         assert response.url == '/'
 
+    @pytest.mark.django_db
+    def test_login_view_redirects_safe_next_url(self, auth_client):
+        client, user = auth_client
+        client.logout()  # ensure logged out first
+        response = client.post('/login/?next=/learn/', {'username': 'testuser', 'password': 'testpassword123'})
+        assert response.status_code == 302
+        assert response.url == '/learn/'
+
+    @pytest.mark.django_db
+    def test_login_view_ignores_unsafe_next_url(self, auth_client):
+        client, user = auth_client
+        client.logout()
+        # Should override to '/'
+        response = client.post('/login/?next=https://evil.com/phishing', {'username': 'testuser', 'password': 'testpassword123'})
+        assert response.status_code == 302
+        assert response.url == '/'
+
 
 class TestHistory:
     """Tests for history functionality."""
@@ -217,6 +234,36 @@ class TestHistory:
         )
         assert response.status_code == 200
         assert CryptoHistory.objects.filter(user=user).count() == 1
+
+    @pytest.mark.django_db
+    def test_api_delete_history_invalid_json(self, auth_client):
+        client, user = auth_client
+        response = client.post(
+            '/api/history/delete/',
+            data="not-valid-json",
+            content_type='application/json'
+        )
+        assert response.status_code == 400
+        assert response.json()['error'] == 'Invalid JSON'
+
+    @pytest.mark.django_db
+    def test_encrypt_invalid_cipher(self, client):
+        response = client.post(
+            '/encrypt/',
+            data=json.dumps({'cipher': 'unknown_cipher', 'plaintext': 'TEST', 'key': '1'}),
+            content_type='application/json'
+        )
+        assert response.status_code == 400
+        assert 'Unknown cipher' in response.json()['error']
+
+    @pytest.mark.django_db
+    def test_encrypt_invalid_json(self, client):
+        response = client.post(
+            '/encrypt/',
+            data="invalid-json-{"
+        )
+        assert response.status_code == 400
+        assert response.json()['error'] == 'Invalid JSON'
 
 
 class TestFileUpload:

@@ -58,7 +58,9 @@
         .page-header h1 {
             font-size: 1.6rem;
             background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .page-header p { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.3rem; }
 
@@ -167,7 +169,7 @@
                     <td title="{{ entry.output_text }}">{{ entry.output_text|truncatechars:25 }}</td>
                     <td title="{{ entry.key_used }}">{{ entry.key_used|truncatechars:15 }}</td>
                     <td>{{ entry.timestamp|date:"M d, H:i" }}</td>
-                    <td><button class="btn-delete" onclick="deleteEntry({{ entry.id }})">Delete</button></td>
+                    <td><button class="btn-delete" onclick="deleteEntry('{{ entry.id }}')">Delete</button></td>
                 </tr>
                 {% endfor %}
             </tbody>
