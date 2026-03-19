@@ -102,7 +102,31 @@
         .nav-links {
             display: flex;
             gap: 1.5rem;
+            align-items: center;
         }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--accent-tertiary);
+        }
+
+        .nav-user {
+            color: var(--accent-tertiary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .nav-user svg { width: 16px; height: 16px; fill: currentColor; }
 
         .nav-link {
             color: var(--text-secondary);
@@ -185,16 +209,17 @@
             color: white;
         }
 
-        .main-grid {
+        .io-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
+            gap: 1.5rem;
             animation: fadeSlideDown 0.6s ease-out 0.2s forwards;
             opacity: 0;
+            align-items: stretch;
         }
 
         @media (max-width: 850px) {
-            .main-grid {
+            .io-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -370,9 +395,6 @@
             transform: translateY(-1px);
         }
 
-        .result-card {
-            display: none;
-        }
 
         .result-box {
             background: var(--bg-primary);
@@ -480,24 +502,47 @@
                 font-size: 1.5rem;
             }
         }
+
+        @media (min-width: 850px) {
+            .site-footer {
+                margin-top: 2rem;
+            }
+        }
     </style>
 </head>
 
 <body>
     <canvas id="matrix-canvas"></canvas>
     <nav>
-        <div class="logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                    d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6.6 1 1.3 1 2.2 0 1.8-1.3 3.2-3 3.2s-3-1.4-3-3.2c0-.9.4-1.6 1-2.2V9.5C10.8 8.1 10.6 7 12 7z" />
-            </svg>
-            <span>CryptoLab</span>
+        <div class="logo-group" style="display: flex; align-items: center; gap: 1rem;">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path
+                        d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6.6 1 1.3 1 2.2 0 1.8-1.3 3.2-3 3.2s-3-1.4-3-3.2c0-.9.4-1.6 1-2.2V9.5C10.8 8.1 10.6 7 12 7z" />
+                </svg>
+                <span>CryptoLab</span>
+            </div>
+            {% if user.is_authenticated %}
+            <span style="color: var(--border-color);">|</span>
+            <span class="nav-user">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                {{ user.username }}
+            </span>
+            {% endif %}
         </div>
         <div class="nav-links">
             <a href="/" class="nav-link active">Encrypt</a>
             <a href="/learn/" class="nav-link">Learn</a>
             <a href="/security/" class="nav-link">Security</a>
             <a href="/about/" class="nav-link">About</a>
+            {% if user.is_authenticated %}
+            <a href="/history/" class="nav-link">History</a>
+            <a href="/upload-key/" class="nav-link">Upload Key</a>
+            <a href="/logout/" class="nav-link">Logout</a>
+            {% else %}
+            <a href="/login/" class="nav-link">Login</a>
+            <a href="/register/" class="nav-link" style="color: var(--accent-primary); font-weight: 600;">Sign Up</a>
+            {% endif %}
         </div>
     </nav>
 
@@ -508,19 +553,19 @@
             <p>15 classical and modern ciphers at your fingertips</p>
         </div>
 
-        <div class="mode-toggle">
-            <button class="mode-btn active" data-mode="encrypt">Encrypt</button>
-            <button class="mode-btn" data-mode="decrypt">Decrypt</button>
-        </div>
+        <div class="toolbar card" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-start; animation: fadeSlideDown 0.6s ease-out 0.1s forwards; opacity: 0; padding: 1.25rem;">
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-width: 150px;">
+                <label style="font-size: 0.8rem; margin: 0; color: var(--text-secondary); font-weight: 500;">Mode</label>
+                <div class="mode-toggle" style="margin: 0; display: flex; width: 100%; border: 1px solid var(--border-color); background: rgba(10, 10, 26, 0.5); padding: 0.25rem; border-radius: 8px; animation: none; opacity: 1;">
+                    <button class="mode-btn active" data-mode="encrypt" style="flex: 1; padding: 0.4rem; font-size: 0.85rem;">Encrypt</button>
+                    <button class="mode-btn" data-mode="decrypt" style="flex: 1; padding: 0.4rem; font-size: 0.85rem;">Decrypt</button>
+                </div>
+            </div>
 
-        <div class="error-box" id="error-box"></div>
-
-        <div class="main-grid">
-            <div class="card">
-                <div class="card-title">Configuration</div>
-                <div class="form-group">
-                    <label>Select Cipher</label>
-                    <select id="cipher-select">
+            <div style="flex: 2; min-width: 200px;">
+                <label style="font-size: 0.8rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary); font-weight: 500;">Select Cipher</label>
+                <select id="cipher-select" style="width: 100%;">
                         <optgroup label="Substitution">
                             {% for key, cipher in ciphers.items %}
                             {% if key in 'caesar,multiplicative,affine,vigenere,autokey' %}
@@ -553,48 +598,63 @@
                             {% endif %}
                             {% endfor %}
                         </optgroup>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label id="input-label">Plaintext</label>
-                    <textarea id="input-text" placeholder="Enter your message here..."></textarea>
-                </div>
-                <div class="form-group">
-                    <div class="key-row">
-                        <label>Key</label>
-                        <button type="button" class="gen-key-btn" id="gen-key-btn">Generate</button>
-                    </div>
-                    <input type="text" id="key-input" placeholder="Enter encryption key">
-                    <p class="key-hint" id="key-hint"></p>
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-primary" id="process-btn">Encrypt</button>
-                    <button class="btn btn-secondary" id="clear-btn">Clear</button>
-                    <button class="btn btn-secondary" id="copy-btn">Copy</button>
-                </div>
+                </select>
             </div>
 
-            <div>
-                <div class="card result-card" id="result-card">
-                    <div class="card-title">Result</div>
-                    <div class="result-box" id="result-text"></div>
-                    <div class="cipher-info">
-                        <h3 id="cipher-name"></h3>
-                        <p id="cipher-description"></p>
-                    </div>
+            <div style="flex: 2; min-width: 250px;">
+                <div class="key-row" style="margin-bottom: 0.5rem;">
+                    <label style="margin: 0; color: var(--text-secondary); font-weight: 500;">Key</label>
+                    <button type="button" class="gen-key-btn" id="gen-key-btn">Generate</button>
                 </div>
-                <div class="card" style="margin-top: 1rem;">
-                    <div class="card-title">History</div>
-                    <div class="history-list" id="history-log">
-                        <div class="history-empty">No operations yet</div>
-                    </div>
-                </div>
+                <input type="text" id="key-input" placeholder="Enter encryption key" style="width: 100%;">
+                <p class="key-hint" id="key-hint" style="margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;"></p>
             </div>
         </div>
 
-        <footer>
-            CryptoLab v2.0 • <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank">View Source</a>
-        </footer>
+        <div class="error-box" id="error-box"></div>
+
+        <div class="io-grid">
+            <!-- Left Card -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span class="card-title" id="input-label" style="margin: 0;">Plaintext</span>
+                    <button class="btn btn-secondary btn-sm" id="clear-btn" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); cursor: pointer;">Clear</button>
+                </div>
+                <textarea id="input-text" placeholder="Enter your message here..." style="flex-grow: 1; resize: vertical; margin-bottom: 1rem; min-height: 200px; max-height: 500px; background: rgba(15, 15, 35, 0.4);"></textarea>
+                <button class="btn btn-primary" id="process-btn" style="width: 100%; padding: 0.85rem; font-size: 1rem;">Encrypt</button>
+            </div>
+
+            <!-- Right Card -->
+            <div class="card" id="result-card" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span class="card-title" style="margin: 0;">Result</span>
+                        <h3 id="cipher-name" style="color: var(--accent-tertiary); font-size: 0.85rem; font-weight: 600; margin: 0;"></h3>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="copy-btn" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); cursor: pointer;">Copy</button>
+                </div>
+                <div class="result-box" id="result-text" style="flex-grow: 1; min-height: 250px; overflow-y: auto; background: rgba(15, 15, 35, 0.4); border: 1px dashed var(--border-color); border-radius: 8px; padding: 1rem; font-family: monospace; white-space: pre-wrap; word-break: break-all; color: var(--text-primary); margin-bottom: 0;">
+                    <div id="result-placeholder" style="color: var(--text-secondary); opacity: 0.5; height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif;">
+                        Output will appear here
+                    </div>
+                </div>
+                <p id="cipher-description" style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 1rem; line-height: 1.5; display: none;"></p>
+            </div>
+        </div>
+        
+        {% if not user.is_authenticated %}
+        <div class="history-banner" style="text-align: center; margin-top: 1rem; animation: fadeSlideDown 0.6s ease-out 0.3s forwards; opacity: 0;">
+            <p style="color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-card); display: inline-block; padding: 0.5rem 1.5rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.2); margin-bottom: 0;">
+                Want to save your encryption history? <a href="/login/" style="color: var(--accent-tertiary); text-decoration: none; font-weight: 500;">Sign In</a> or <a href="/register/" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">Create an Account</a>
+            </p>
+        </div>
+        {% else %}
+        <div class="history-banner" style="text-align: center; margin-top: 1rem; animation: fadeSlideDown 0.6s ease-out 0.3s forwards; opacity: 0;">
+            <p style="color: var(--text-secondary); font-size: 0.85rem; background: var(--bg-card); display: inline-block; padding: 0.5rem 1.5rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.2); margin-bottom: 0;">
+                Your encryption history is automatically saved. <a href="/history/" style="color: var(--accent-tertiary); text-decoration: none; font-weight: 500;">View History</a>
+            </p>
+        </div>
+        {% endif %}
     </div>
 
     <script>
@@ -611,14 +671,14 @@
         const modeBtns = document.querySelectorAll('.mode-btn');
         const inputLabel = document.getElementById('input-label');
         const genKeyBtn = document.getElementById('gen-key-btn');
-        const historyLog = document.getElementById('history-log');
 
         let currentMode = 'encrypt';
-        let history = [];
 
-        // Check URL for pre-selected cipher
+        // Check URL for pre-selected cipher and key
         const urlParams = new URLSearchParams(window.location.search);
         const preselectedCipher = urlParams.get('cipher');
+        const prefilledKey = urlParams.get('key');
+        
         if (preselectedCipher) {
             for (let i = 0; i < cipherSelect.options.length; i++) {
                 if (cipherSelect.options[i].value === preselectedCipher) {
@@ -626,6 +686,13 @@
                     break;
                 }
             }
+        }
+        
+        if (prefilledKey) {
+            keyInput.value = prefilledKey;
+            // Provide visual feedback it was loaded
+            keyInput.style.borderColor = 'var(--success)';
+            setTimeout(() => { keyInput.style.borderColor = 'var(--border-color)'; }, 2000);
         }
 
         modeBtns.forEach(btn => {
@@ -711,41 +778,44 @@
         });
 
         function showResult(data) {
+            document.getElementById('result-placeholder')?.remove();
+            resultText.style.borderStyle = 'solid';
+            resultText.style.borderColor = 'var(--success)';
+            resultText.style.color = 'var(--success)';
             resultText.textContent = data.result;
-            resultCard.style.display = 'block';
+            
             if (data.cipher_info) {
                 document.getElementById('cipher-name').textContent = data.cipher_info.name;
-                document.getElementById('cipher-description').textContent = data.cipher_info.description;
+                const desc = document.getElementById('cipher-description');
+                desc.textContent = data.cipher_info.description;
+                desc.style.display = 'block';
             }
-            addToHistory(currentMode, cipherSelect.value, inputText.value, data.result);
-            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; resultCard.style.display = 'none'; }
+        function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
         function hideError() { errorBox.style.display = 'none'; }
 
-        clearBtn.addEventListener('click', () => { inputText.value = ''; keyInput.value = ''; resultCard.style.display = 'none'; hideError(); keyStatus.className = 'key-status'; });
+        clearBtn.addEventListener('click', () => { 
+            inputText.value = ''; 
+            keyInput.value = ''; 
+            hideError(); 
+            resultText.innerHTML = '<div id="result-placeholder" style="color: var(--text-secondary); opacity: 0.5; height: 100%; display: flex; align-items: center; justify-content: center; font-family: \'Inter\', sans-serif;">Output will appear here</div>';
+            resultText.style.borderStyle = 'dashed';
+            resultText.style.borderColor = 'var(--border-color)';
+            resultText.style.color = 'var(--text-primary)';
+            document.getElementById('cipher-name').textContent = '';
+            document.getElementById('cipher-description').style.display = 'none';
+        });
 
         copyBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(resultText.textContent);
             copyBtn.textContent = 'Copied!';
             setTimeout(() => copyBtn.textContent = 'Copy', 1500);
         });
-
-        function addToHistory(mode, cipher, input, result) {
-            history.unshift({ timestamp: new Date().toLocaleTimeString(), mode: mode.toUpperCase(), cipher, input: input.substring(0, 12) + (input.length > 12 ? '...' : ''), result: result.substring(0, 12) + (result.length > 12 ? '...' : '') });
-            if (history.length > 10) history.pop();
-            renderHistory();
-        }
-
-        function renderHistory() {
-            if (history.length === 0) { historyLog.innerHTML = '<div class="history-empty">No operations yet</div>'; return; }
-            historyLog.innerHTML = history.map(h => `<div class="history-item"><span class="history-time">[${h.timestamp}]</span> <span class="history-mode">${h.mode}</span> (${h.cipher}): ${h.input} → <span class="history-result">${h.result}</span></div>`).join('');
-        }
     </script>
 
     <div class="site-footer">
-        <p class="ps-text">PS: we don't really know what we're doing &lt;3</p>
+        CryptoLab v2.0 • <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank" style="color: var(--accent-tertiary); text-decoration: none;">View Source</a>
     </div>
 
     <script>
@@ -772,7 +842,7 @@
             ctx.font = fontSize + 'px monospace';
 
             for (let i = 0; i < drops.length; i++) {
-                const char = Math.random() > 0.5 ? Math.floor(Math.random() * 2) : Math.floor(Math.random() * 10);
+                const char = Math.random() > 0.5 ? Math.floor(Math.random() * 2).toString() : Math.floor(Math.random() * 10).toString();
                 ctx.fillText(char, i * fontSize, drops[i] * fontSize);
 
                 if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {

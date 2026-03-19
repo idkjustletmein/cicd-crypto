@@ -1,0 +1,68 @@
+"""Forms for CryptoLab application."""
+
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+
+class RegisterForm(UserCreationForm):
+    """Extended registration form with email field."""
+    
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Email address',
+            'id': 'register-email',
+        })
+    )
+    
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password1', 'password2']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-input',
+            'placeholder': 'Username',
+            'id': 'register-username',
+        })
+        self.fields['password1'].widget.attrs.update({
+            'class': 'form-input',
+            'placeholder': 'Password',
+            'id': 'register-password1',
+        })
+        self.fields['password2'].widget.attrs.update({
+            'class': 'form-input',
+            'placeholder': 'Confirm password',
+            'id': 'register-password2',
+        })
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user
+
+
+class KeyFileUploadForm(forms.Form):
+    """Form for uploading key files."""
+    
+    key_file = forms.FileField(
+        widget=forms.FileInput(attrs={
+            'class': 'form-input',
+            'id': 'key-file-input',
+            'accept': '.txt,.key,.pem,.pub',
+        })
+    )
+    cipher_type = forms.CharField(
+        max_length=50,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Cipher type (optional)',
+            'id': 'cipher-type-input',
+        })
+    )

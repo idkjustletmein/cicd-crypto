@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Key - CryptoLab</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6.6 1 1.3 1 2.2 0 1.8-1.3 3.2-3 3.2s-3-1.4-3-3.2c0-.9.4-1.6 1-2.2V9.5C10.8 8.1 10.6 7 12 7z'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a1a; --bg-secondary: #12122a;
+            --bg-card: rgba(30, 30, 60, 0.6); --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6; --accent-tertiary: #06b6d4;
+            --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+            --border-color: rgba(99, 102, 241, 0.3);
+            --success: #10b981; --error: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary); min-height: 100vh; color: var(--text-primary);
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+        }
+        #matrix-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; opacity: 0.06; pointer-events: none;
+        }
+        nav, .container { position: relative; z-index: 1; }
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 2rem; background: rgba(10, 10, 26, 0.85);
+            backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 1.2rem; font-weight: 700; color: var(--accent-tertiary); text-decoration: none;
+        }
+        .logo svg { width: 22px; height: 22px; fill: var(--accent-primary); }
+        .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+        .nav-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 0.85rem;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .nav-link:hover, .nav-link.active { color: var(--accent-tertiary); }
+        .nav-user { color: var(--accent-tertiary); font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+        .nav-user svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-primary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .page-header p { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.3rem; }
+
+        .upload-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 2rem; backdrop-filter: blur(12px); margin-bottom: 2rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-color); border-radius: 12px;
+            padding: 2rem; text-align: center; cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        .upload-zone:hover { border-color: var(--accent-primary); background: rgba(99, 102, 241, 0.05); }
+        .upload-zone.dragover { border-color: var(--accent-tertiary); background: rgba(6, 182, 212, 0.1); }
+        .upload-zone p { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem; }
+        .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+        .form-group { margin-top: 1.25rem; }
+        .form-group label {
+            display: block; font-size: 0.8rem; font-weight: 500;
+            color: var(--text-secondary); margin-bottom: 0.4rem;
+        }
+        .form-input {
+            width: 100%; padding: 0.7rem 1rem; background: rgba(15, 15, 35, 0.8);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            color: var(--text-primary); font-size: 0.9rem; font-family: inherit;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent-primary); }
+
+        .btn-primary {
+            width: 100%; padding: 0.75rem; border: none; border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s; margin-top: 1rem;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3); }
+
+        .file-list h3 { font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-primary); }
+        .file-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.65rem 1rem; background: rgba(15, 15, 35, 0.5);
+            border: 1px solid rgba(99, 102, 241, 0.1); border-radius: 8px; margin-bottom: 0.5rem;
+        }
+        .file-item .filename { font-size: 0.8rem; color: var(--text-primary); }
+        .file-item .file-meta { font-size: 0.7rem; color: var(--text-secondary); }
+
+        .result-box {
+            margin-top: 1rem; padding: 1rem; border-radius: 8px; display: none;
+            font-size: 0.85rem; word-break: break-all;
+        }
+        .result-box.success { display: block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+        .result-box.error { display: block; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; }
+    </style>
+</head>
+
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <nav>
+        <div class="logo-group" style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/" class="logo" style="text-decoration: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6.6 1 1.3 1 2.2 0 1.8-1.3 3.2-3 3.2s-3-1.4-3-3.2c0-.9.4-1.6 1-2.2V9.5C10.8 8.1 10.6 7 12 7z" />
+                </svg>
+                <span>CryptoLab</span>
+            </a>
+            {% if user.is_authenticated %}
+            <span style="color: var(--border-color);">|</span>
+            <span class="nav-user">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                {{ user.username }}
+            </span>
+            {% endif %}
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Encrypt</a>
+            <a href="/learn/" class="nav-link">Learn</a>
+            <a href="/security/" class="nav-link">Security</a>
+            <a href="/about/" class="nav-link">About</a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'history' %}" class="nav-link">History</a>
+            <a href="{% url 'upload_key' %}" class="nav-link active">Upload Key</a>
+            <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Upload Key File</h1>
+            <p>Import encryption keys from files to use with your ciphers</p>
+        </div>
+
+        <div class="upload-card">
+            <form id="upload-form" method="POST" enctype="multipart/form-data" action="{% url 'upload_key' %}">
+                {% csrf_token %}
+                <div class="upload-zone" id="upload-zone">
+                    <div class="upload-icon">📁</div>
+                    <p><strong>Click to select</strong> or drag & drop your key file</p>
+                    <p>.txt, .key, .pem, .pub files accepted</p>
+                    <input type="file" name="key_file" id="key-file-input" accept=".txt,.key,.pem,.pub" style="display: none;">
+                </div>
+                <div id="selected-file" style="display:none; margin-top:0.75rem; color: var(--accent-tertiary); font-size:0.85rem;"></div>
+                <div class="form-group">
+                    <label for="cipher-type-input">Cipher Type (optional)</label>
+                    <input type="text" name="cipher_type" id="cipher-type-input" class="form-input" placeholder="e.g. RSA, AES, Caesar...">
+                </div>
+                <button type="submit" class="btn-primary">Upload Key</button>
+            </form>
+            <div id="result-box" class="result-box"></div>
+        </div>
+
+        {% if files %}
+        <div class="file-list">
+            <h3>Previously Uploaded Keys</h3>
+            {% for f in files %}
+            <div class="file-item">
+                <div>
+                    <div class="filename">{{ f.original_filename }}</div>
+                    <div class="file-meta">{{ f.cipher_type|default:"No cipher specified" }} • {{ f.uploaded_at|date:"M d, H:i" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const zone = document.getElementById('upload-zone');
+        const input = document.getElementById('key-file-input');
+        const selected = document.getElementById('selected-file');
+
+        zone.addEventListener('click', () => input.click());
+        zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+        zone.addEventListener('drop', e => {
+            e.preventDefault(); zone.classList.remove('dragover');
+            input.files = e.dataTransfer.files;
+            showSelected();
+        });
+        input.addEventListener('change', showSelected);
+
+        function showSelected() {
+            if (input.files.length) {
+                selected.style.display = 'block';
+                selected.textContent = '📎 ' + input.files[0].name;
+            }
+        }
+
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const resultBox = document.getElementById('result-box');
+            try {
+                const resp = await fetch(this.action, { method: 'POST', body: formData });
+                const data = await resp.json();
+                if (data.success) {
+                    resultBox.className = 'result-box success';
+                    resultBox.innerHTML = '<strong>Key loaded successfully. Redirecting...</strong>';
+                    
+                    // Build redirect URL
+                    const cipherType = document.getElementById('cipher-type-input').value.trim().toLowerCase();
+                    let redirectUrl = '/?key=' + encodeURIComponent(data.key_content);
+                    if (cipherType) {
+                        redirectUrl += '&cipher=' + encodeURIComponent(cipherType);
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 800);
+                } else {
+                    resultBox.className = 'result-box error';
+                    resultBox.textContent = data.error || 'Upload failed';
+                }
+            } catch(err) {
+                resultBox.className = 'result-box error';
+                resultBox.textContent = 'Upload failed: ' + err.message;
+            }
+        });
+
+        // Matrix rain
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const columns = Math.floor(canvas.width / 14);
+        const drops = Array(columns).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(10, 10, 26, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#6366f1'; ctx.font = '12px monospace';
+            for (let i = 0; i < drops.length; i++) {
+                const char = String.fromCharCode(0x30 + Math.random() * 10);
+                ctx.fillText(char, i * 14, drops[i] * 14);
+                if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 50);
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+</body>
+</html>
