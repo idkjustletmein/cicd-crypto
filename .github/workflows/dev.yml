@@ -250,7 +250,7 @@ jobs:
 
 
           # --- Overall Status & Color ---
-          if [ "${{ needs.test.result }}" == "failure" ]; then
+          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.sonarcloud.result }}" == "failure" ]; then
              COLOR=15548997 # Red
              TITLE="⚙️ Dev Pipeline Failed"
              DESC="One or more stages failed on the **develop** branch."
