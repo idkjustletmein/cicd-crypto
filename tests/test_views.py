@@ -260,7 +260,8 @@ class TestHistory:
     def test_encrypt_invalid_json(self, client):
         response = client.post(
             '/encrypt/',
-            data="invalid-json-{"
+            data="invalid-json-{",
+            content_type="application/json"
         )
         assert response.status_code == 400
         assert response.json()['error'] == 'Invalid JSON'
