@@ -236,6 +236,20 @@ class TestHistory:
         assert CryptoHistory.objects.filter(user=user).count() == 1
 
     @pytest.mark.django_db
+    def test_api_delete_history_missing_id(self, auth_client):
+        client, _ = auth_client
+        response = client.post('/api/history/delete/', data=json.dumps({}), content_type='application/json')
+        assert response.status_code == 400
+        assert response.json()['error'] == 'Missing entry ID'
+
+    @pytest.mark.django_db
+    def test_api_delete_history_not_found(self, auth_client):
+        client, user = auth_client
+        response = client.post('/api/history/delete/', data=json.dumps({'id': 9999}), content_type='application/json')
+        assert response.status_code == 404
+        assert response.json()['error'] == 'Entry not found'
+
+    @pytest.mark.django_db
     def test_api_delete_history_invalid_json(self, auth_client):
         client, user = auth_client
         response = client.post(
@@ -255,6 +269,17 @@ class TestHistory:
         )
         assert response.status_code == 400
         assert 'Unknown cipher' in response.json()['error']
+
+    @pytest.mark.django_db
+    def test_encrypt_missing_cipher(self, client):
+        response = client.post('/encrypt/', data=json.dumps({'plaintext': 'TEST'}), content_type='application/json')
+        assert response.status_code == 400
+        assert response.json()['error'] == 'Cipher not specified'
+
+    @pytest.mark.django_db
+    def test_encrypt_invalid_key(self, client):
+        response = client.post('/encrypt/', data=json.dumps({'cipher': 'caesar', 'plaintext': 'TEST', 'key': 'not_an_int'}), content_type='application/json')
+        assert response.status_code == 400
 
     @pytest.mark.django_db
     def test_encrypt_invalid_json(self, client):
@@ -290,3 +315,17 @@ class TestFileUpload:
         assert data['success'] is True
         assert data['key_content'] == 'my_secret_key'
         assert UploadedKeyFile.objects.filter(user=user).count() == 1
+
+    @pytest.mark.django_db
+    def test_api_upload_key_missing_file(self, auth_client):
+        client, user = auth_client
+        response = client.post('/api/upload-key/', {'cipher_type': 'AES'})
+        assert response.status_code == 400
+        assert response.json()['error'] == 'No file provided'
+
+    @pytest.mark.django_db
+    def test_upload_key_view_invalid_form(self, auth_client):
+        client, user = auth_client
+        response = client.post('/upload-key/', {'cipher_type': 'AES'})
+        assert response.status_code == 400
+        assert response.json()['error'] == 'Invalid file'
