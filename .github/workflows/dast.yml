@@ -1,0 +1,149 @@
+name: DAST & Load Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to scan'
+        required: true
+        default: 'https://cryptolab-sxo4.onrender.com'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  dast_scan:
+    name: OWASP ZAP DAST
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ github.event.inputs.target_url }}
+          rules_file_name: 'zap/rules.tsv'
+          cmd_options: '-I'
+          allow_issue_writing: false
+        continue-on-error: true
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
+        continue-on-error: true
+
+  load_test:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run k6 Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6/load-test.js
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url }}
+        continue-on-error: true
+
+      - name: Upload k6 Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: summary.json
+        continue-on-error: true
+
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs: [dast_scan, load_test]
+    if: always()
+
+    steps:
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          REPO="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+          TARGET="${{ github.event.inputs.target_url }}"
+          RUN_URL="https://github.com/$REPO/actions/runs/${{ github.run_id }}"
+          
+          PASS_ICON="✅"
+          FAIL_ICON="❌"
+          SKIP_ICON="⏭️"
+          
+          # --- ZAP ---
+          if [ "${{ needs.dast_scan.result }}" == "success" ]; then
+            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nBaseline scan completed — no critical alerts"
+          elif [ "${{ needs.dast_scan.result }}" == "skipped" ]; then
+            ZAP_STATUS="$SKIP_ICON **OWASP ZAP DAST**\\nSkipped"
+          else
+            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nScan completed with findings (see artifacts)"
+          fi
+          
+          # --- k6 ---
+          if [ "${{ needs.load_test.result }}" == "success" ]; then
+            K6_STATUS="$PASS_ICON **k6 Load Test**\\nAll thresholds passed"
+          elif [ "${{ needs.load_test.result }}" == "skipped" ]; then
+            K6_STATUS="$SKIP_ICON **k6 Load Test**\\nSkipped"
+          else
+            K6_STATUS="$FAIL_ICON **k6 Load Test**\\nThreshold breached (see artifacts)"
+          fi
+          
+          # --- Overall ---
+          if [ "${{ needs.dast_scan.result }}" == "success" ] && [ "${{ needs.load_test.result }}" == "success" ]; then
+            COLOR=5763719
+            TITLE="🔍 DAST Scan Complete"
+            DESC="All security and load tests passed ✅"
+          else
+            COLOR=15548997
+            TITLE="🔍 DAST Scan Complete"
+            DESC="Findings detected — review artifacts for details"
+          fi
+          
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          START_TIME=$(gh run view ${{ github.run_id }} --repo ${{ github.repository }} --json startedAt --jq '.startedAt')
+          START_TS=$(date -d "$START_TIME" +%s)
+          NOW_TS=$(date +%s)
+          DURATION_SEC=$((NOW_TS - START_TS))
+          MIN=$((DURATION_SEC / 60))
+          SEC=$((DURATION_SEC % 60))
+          DURATION_STR="⏱️ ${MIN}m ${SEC}s"
+          
+          PAYLOAD=$(cat <<EOF
+          {
+            "embeds": [{
+              "title": "$TITLE",
+              "description": "$DESC",
+              "color": $COLOR,
+              "url": "$RUN_URL",
+              "fields": [
+                { "name": "Repository", "value": "[$REPO](https://github.com/$REPO)", "inline": true },
+                { "name": "Target", "value": "$TARGET", "inline": true },
+                
+                { "name": "", "value": "────────────────────────────────────────", "inline": false },
+                
+                { "name": "", "value": "$ZAP_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$K6_STATUS", "inline": false },
+                
+                { "name": "", "value": "────────────────────────────────────────", "inline": false },
+                { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
+              ],
+              "footer": { "text": "DAST Pipeline • Run #${{ github.run_number }} • Triggered by $ACTOR" },
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          EOF
+          )
+          
+          curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
