@@ -148,10 +148,71 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/cryptolab:latest
 
+  dast_scan:
+    name: OWASP ZAP DAST
+    runs-on: ubuntu-latest
+    needs: docker_build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for Render redeployment
+        run: |
+          echo "Waiting 3 minutes for Render to pull new image..."
+          sleep 180
+
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: 'https://cryptolab-sxo4.onrender.com'
+          rules_file_name: 'zap/rules.tsv'
+          cmd_options: '-I'
+          allow_issue_writing: false
+        continue-on-error: true
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: report_html.html
+        continue-on-error: true
+
+  load_test:
+    name: k6 Load Test
+    runs-on: ubuntu-latest
+    needs: docker_build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for Render redeployment
+        run: |
+          echo "Waiting 3 minutes for Render to pull new image..."
+          sleep 180
+
+      - name: Run k6 Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6/load-test.js
+        env:
+          TARGET_URL: 'https://cryptolab-sxo4.onrender.com'
+        continue-on-error: true
+
+      - name: Upload k6 Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results
+          path: summary.json
+        continue-on-error: true
+
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [test, security_scan, docker_build]
+    needs: [test, security_scan, docker_build, dast_scan, load_test]
     if: always()
     
     steps:
@@ -229,8 +290,26 @@ jobs:
              DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nCancelled"
           fi
 
+          # --- Stage: OWASP ZAP ---
+          if [ "${{ needs.dast_scan.result }}" == "success" ]; then
+            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nBaseline scan completed — no critical alerts"
+          elif [ "${{ needs.dast_scan.result }}" == "skipped" ]; then
+            ZAP_STATUS="$SKIP_ICON **OWASP ZAP DAST**\\nSkipped"
+          else
+            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nScan completed with findings (see artifacts)"
+          fi
+
+          # --- Stage: k6 Load Test ---
+          if [ "${{ needs.load_test.result }}" == "success" ]; then
+            K6_STATUS="$PASS_ICON **k6 Load Test**\\nAll thresholds passed"
+          elif [ "${{ needs.load_test.result }}" == "skipped" ]; then
+            K6_STATUS="$SKIP_ICON **k6 Load Test**\\nSkipped"
+          else
+            K6_STATUS="$FAIL_ICON **k6 Load Test**\\nThreshold breached (see artifacts)"
+          fi
+
           # --- Overall Status & Color ---
-          if [ "${{ needs.test.result }}" == "failure" ] || [ "${{ needs.security_scan.result }}" == "failure" ] || [ "${{ needs.docker_build.result }}" == "failure" ]; then
+          if [ "${{ needs.test.result }}" != "success" ] || [ "${{ needs.security_scan.result }}" != "success" ] || [ "${{ needs.docker_build.result }}" != "success" ]; then
              COLOR=15548997 # Red
              TITLE="🚀 Staging Pipeline Failed"
              DESC="One or more stages failed. Deployment blocked."
@@ -284,6 +363,10 @@ jobs:
                 { "name": "", "value": "$DOCKER_STATUS", "inline": false },
                 { "name": "", "value": "🔹", "inline": false },
                 { "name": "", "value": "$DEPLOY_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$ZAP_STATUS", "inline": false },
+                { "name": "", "value": "🔹", "inline": false },
+                { "name": "", "value": "$K6_STATUS", "inline": false },
                 
                 { "name": "", "value": "────────────────────────────────────────", "inline": false },
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
@@ -297,3 +380,4 @@ jobs:
           )
           
           curl -H "Content-Type: application/json" -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+
