@@ -24,6 +24,13 @@ export const options = {
 export default function () {
   // 1. Home page
   let homeRes = http.get(`${BASE_URL}/`);
+  
+  // Extract the CSRF Token cookie that Django sets
+  let csrfToken = '';
+  if (homeRes.cookies.csrftoken && homeRes.cookies.csrftoken.length > 0) {
+    csrfToken = homeRes.cookies.csrftoken[0].value;
+  }
+
   check(homeRes, {
     'Home: status 200': (r) => r.status === 200,
     'Home: has CryptoLab': (r) => r.body.includes('CryptoLab'),
@@ -55,7 +62,10 @@ export default function () {
   });
 
   let encryptRes = http.post(`${BASE_URL}/encrypt/`, encryptPayload, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken  // Pass the extracted token to bypass Forbidden checks
+    },
   });
 
   check(encryptRes, {
