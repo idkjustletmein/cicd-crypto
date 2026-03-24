@@ -8,6 +8,9 @@ on:
         required: true
         default: 'https://cryptolab-sxo4.onrender.com'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   dast_scan:
     name: OWASP ZAP DAST
