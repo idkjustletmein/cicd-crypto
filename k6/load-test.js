@@ -1,5 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
 // ── Configuration ──────────────────────────────────────────────
 const BASE_URL = __ENV.TARGET_URL || 'https://cryptolab-sxo4.onrender.com';
@@ -73,6 +74,7 @@ export default function () {
 
 export function handleSummary(data) {
   return {
-    "summary.json": JSON.stringify(data),
+    "summary.html": htmlReport(data),
+    "summary.json": JSON.stringify(data), // We can optionally keep JSON just in case
   };
 }
