@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevSecOps Operations Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .grid-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .grid-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+        }
+
+        a.card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .link-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+
+        .link-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Status Cards */
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-failure { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .badge-running { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-unknown { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+        .meta-list {
+            list-style: none;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .meta-list li {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .meta-value {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        
+        /* Reports Section */
+        .reports-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        
+        .report-btn {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .report-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>DevSecOps Command Center</h1>
+        <p>Real-time observability and service access for the CryptoLab Pipeline</p>
+    </header>
+
+    <!-- SECTION: Quick Links -->
+    <h2 class="section-title">🚀 Infrastructure & Services</h2>
+    <div class="grid-links">
+        <a href="https://cryptolab-sxo4.onrender.com" target="_blank" class="card link-card">
+            <div class="card-icon">🌐</div>
+            <h3>Live Application</h3>
+            <p>CryptoLab Production Site</p>
+        </a>
+        <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank" class="card link-card">
+            <div class="card-icon">🐙</div>
+            <h3>GitHub Repository</h3>
+            <p>Source Code & Workflows</p>
+        </a>
+        <a href="https://dashboard.render.com/" target="_blank" class="card link-card">
+            <div class="card-icon">☁️</div>
+            <h3>Render Dashboard</h3>
+            <p>Web Service Hosting</p>
+        </a>
+        <a href="https://console.neon.tech/" target="_blank" class="card link-card">
+            <div class="card-icon">🐘</div>
+            <h3>Neon Console</h3>
+            <p>PostgreSQL Database</p>
+        </a>
+        <a href="https://hub.docker.com/repository/docker/idkjustletmein/cryptolab" target="_blank" class="card link-card">
+            <div class="card-icon">🐳</div>
+            <h3>Docker Hub</h3>
+            <p>Container Registry</p>
+        </a>
+        <a href="https://sonarcloud.io/project/overview?id=idkjustletmein_cicd-crypto" target="_blank" class="card link-card">
+            <div class="card-icon">🛡️</div>
+            <h3>SonarCloud</h3>
+            <p>SAST Security Dashboard</p>
+        </a>
+        <a href="https://idkjustletmein.grafana.net/a/grafana-synthetic-monitoring-app/checks/2294?from=now-15m&to=now&timezone=browser&var-probe=$__all&var-job=cryptolab-production-http&var-instance=https:%2F%2Fcryptolab-sxo4.onrender.com&refresh=5s" target="_blank" class="card link-card">
+            <div class="card-icon">📈</div>
+            <h3>Grafana Synthetics</h3>
+            <p>Uptime & Latency Monitoring</p>
+        </a>
+    </div>
+
+    <!-- SECTION: Pipeline Statuses (Dynamic) -->
+    <h2 class="section-title">⚙️ Latest Pipeline Executions</h2>
+    <div class="grid-status" id="pipeline-container">
+        <!-- Cards injected via JS -->
+        <div class="card"><div class="loader"></div> Loading workflow sync...</div>
+    </div>
+
+    <!-- SECTION: Security & Performance Artifacts -->
+    <h2 class="section-title">📁 Latest Artifact Reports</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Note: Automatically fetched direct downloads for the most recent completed pipeline runs.</p>
+    <div class="reports-grid" id="artifacts-container">
+        <div class="loader"></div>
+    </div>
+</div>
+
+<script>
+    const REPO = 'idkjustletmein/cicd-crypto';
+    const API_BASE = `https://api.github.com/repos/${REPO}`;
+
+    // Map workflow file names to display names
+    const WORKFLOW_MAP = {
+        'dev.yml': 'Development Pipeline (Test -> Auto PR)',
+        'staging.yml': 'Staging Pipeline (Trivy -> Docker -> Deploy)',
+        'dast.yml': 'DAST & Load Testing (ZAP + k6)'
+    };
+
+    function getBadgeClass(status, conclusion) {
+        if (status !== 'completed') return 'badge-running';
+        if (conclusion === 'success') return 'badge-success';
+        if (conclusion === 'failure') return 'badge-failure';
+        return 'badge-unknown';
+    }
+
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleString();
+    }
+
+    async function fetchPipelines() {
+        try {
+            const res = await fetch(`${API_BASE}/actions/runs?per_page=30`);
+            const data = await res.json();
+            
+            const container = document.getElementById('pipeline-container');
+            container.innerHTML = ''; // Clear loader
+
+            // We only want the most recent run for each workflow type
+            const latestRuns = {};
+            data.workflow_runs.forEach(run => {
+                const wfName = run.path.split('/').pop();
+                if (WORKFLOW_MAP[wfName] && !latestRuns[wfName]) {
+                    latestRuns[wfName] = run;
+                }
+            });
+
+            // Handle artifacts while we parse runs
+            const artifactsContainer = document.getElementById('artifacts-container');
+            artifactsContainer.innerHTML = '';
+
+            // Render Pipeline Cards
+            for (const [wfName, run] of Object.entries(latestRuns)) {
+                const statusText = run.status !== 'completed' ? run.status : run.conclusion;
+                const badgeClass = getBadgeClass(run.status, run.conclusion);
+                
+                const cardHtml = `
+                    <a href="${run.html_url}" target="_blank" class="card">
+                        <div class="status-header">
+                            <h3>${WORKFLOW_MAP[wfName]}</h3>
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                        </div>
+                        <ul class="meta-list">
+                            <li><span>Trigger:</span> <span class="meta-value">${run.event}</span></li>
+                            <li><span>Branch:</span> <span class="meta-value">${run.head_branch}</span></li>
+                            <li><span>Commit:</span> <span class="meta-value">${run.head_sha.substring(0,7)}</span></li>
+                            <li><span>Date:</span> <span class="meta-value">${formatDate(run.updated_at)}</span></li>
+                        </ul>
+                    </a>
+                `;
+                container.innerHTML += cardHtml;
+                
+                // Fetch Artifacts for this specific run (since DAST has ZAP/k6, Dev has Pytest, Staging has Trivy)
+                if (run.status === 'completed') {
+                    fetchArtifactsForRun(run.id, run.html_url);
+                }
+            }
+
+        } catch (error) {
+            document.getElementById('pipeline-container').innerHTML = `<p style="color: var(--danger)">Failed to load pipelines from GitHub API.</p>`;
+        }
+    }
+    
+    // Artifact Mapping for Display
+    const ARTIFACT_NAMES = {
+        'zap-report': 'OWASP ZAP Report (HTML)',
+        'k6-results': 'k6 Load Test Results (HTML/JSON)',
+        'trivy-report': 'Trivy Scan Results (SARIF)',
+        'coverage': 'Pytest Coverage Report'
+    };
+
+    async function fetchArtifactsForRun(runId, runUrl) {
+        try {
+            const res = await fetch(`${API_BASE}/actions/runs/${runId}/artifacts`);
+            const data = await res.json();
+            
+            const container = document.getElementById('artifacts-container');
+            
+            data.artifacts.forEach(art => {
+                const displayName = ARTIFACT_NAMES[art.name] || art.name;
+                // If it's a known artifact or has report in the name
+                if (ARTIFACT_NAMES[art.name] || art.name.includes('report') || art.name.includes('results')) {
+                    // Since GitHub API requires auth to download artifacts directly via API url, 
+                    // we direct users to the run page OR use the suite URL trick if authenticated locally.
+                    // For a public static dashboard, linking to the GitHub Actions run bottom section is safest.
+                    container.innerHTML += `
+                        <a href="${runUrl}" target="_blank" class="report-btn" title="View run to download artifact: ${art.name}">
+                            ⬇️ ${displayName}
+                        </a>
+                    `;
+                }
+            });
+        } catch (e) {
+            console.error("Artifact fetch error", e);
+        }
+    }
+
+    // Initialize
+    fetchPipelines();
+    // Refresh every 60 seconds
+    setInterval(fetchPipelines, 60000);
+
+</script>
+</body>
+</html>
