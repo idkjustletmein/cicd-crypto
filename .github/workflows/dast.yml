@@ -81,22 +81,41 @@ jobs:
           FAIL_ICON="❌"
           SKIP_ICON="⏭️"
           
+          # --- Fetch Artifact Links ---
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          ARTIFACTS_JSON=$(gh api /repos/$REPO/actions/runs/${{ github.run_id }}/artifacts || echo "{}")
+          
+          # Use jq to find the artifact URLs. GitHub API provides an 'archive_download_url'.
+          # We can also construct the html web link manually.
+          ZAP_ARTIFACT_ID=$(echo "$ARTIFACTS_JSON" | jq -r '.artifacts[]? | select(.name=="zap-report") | .id')
+          K6_ARTIFACT_ID=$(echo "$ARTIFACTS_JSON" | jq -r '.artifacts[]? | select(.name=="k6-results") | .id')
+          
+          ZAP_LINK=""
+          if [ -n "$ZAP_ARTIFACT_ID" ] && [ "$ZAP_ARTIFACT_ID" != "null" ]; then
+            ZAP_LINK="\\n📥 [Download ZAP Report](https://github.com/$REPO/actions/runs/${{ github.run_id }}/artifacts/$ZAP_ARTIFACT_ID)"
+          fi
+          
+          K6_LINK=""
+          if [ -n "$K6_ARTIFACT_ID" ] && [ "$K6_ARTIFACT_ID" != "null" ]; then
+            K6_LINK="\\n📥 [Download k6 Results](https://github.com/$REPO/actions/runs/${{ github.run_id }}/artifacts/$K6_ARTIFACT_ID)"
+          fi
+          
           # --- ZAP ---
           if [ "${{ needs.dast_scan.result }}" == "success" ]; then
-            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nBaseline scan completed — no critical alerts"
+            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nBaseline scan completed — no critical alerts$ZAP_LINK"
           elif [ "${{ needs.dast_scan.result }}" == "skipped" ]; then
             ZAP_STATUS="$SKIP_ICON **OWASP ZAP DAST**\\nSkipped"
           else
-            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nScan completed with findings (see artifacts)"
+            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nScan completed with findings$ZAP_LINK"
           fi
           
           # --- k6 ---
           if [ "${{ needs.load_test.result }}" == "success" ]; then
-            K6_STATUS="$PASS_ICON **k6 Load Test**\\nAll thresholds passed"
+            K6_STATUS="$PASS_ICON **k6 Load Test**\\nAll thresholds passed$K6_LINK"
           elif [ "${{ needs.load_test.result }}" == "skipped" ]; then
             K6_STATUS="$SKIP_ICON **k6 Load Test**\\nSkipped"
           else
-            K6_STATUS="$FAIL_ICON **k6 Load Test**\\nThreshold breached (see artifacts)"
+            K6_STATUS="$FAIL_ICON **k6 Load Test**\\nThreshold breached$K6_LINK"
           fi
           
           # --- Overall ---
