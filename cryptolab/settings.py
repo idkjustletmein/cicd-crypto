@@ -56,7 +56,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'cryptolab.wsgi.application'
+import os
+import dj_database_url
 
 DATABASES = {
     'default': {
@@ -64,6 +65,14 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# If running on Render (or anywhere else with DATABASE_URL), use the Postgres DB instead
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 # Auth settings
 LOGIN_URL = '/login/'
