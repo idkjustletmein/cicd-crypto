@@ -3,393 +3,505 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevSecOps Operations Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>DevSecOps Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
         body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
-            background-attachment: fixed;
-            color: var(--text-main);
+            background: #0a0e1a;
+            color: #e2e8f0;
             min-height: 100vh;
-            padding: 2rem;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            padding: 1rem 1.5rem;
+            gap: 1rem;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* ── HEADER ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(to right, #60a5fa, #34d399);
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
         }
-        
-        header p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .clock {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .clock span { color: #94a3b8; }
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .health-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #64748b;
+            animation: pulse 2s infinite;
+        }
+        .health-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+        .health-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ── MAIN GRID ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 1rem;
         }
 
-        .section-title {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
+        /* ── PANELS ── */
+        .panel {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .panel-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* ── PIPELINE STATUS BADGES (Row 1, spans all 3 cols) ── */
+        .pipeline-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .pipeline-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .pipeline-card .pipe-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pipeline-card .pipe-head h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .pipe-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pipe-badge.passing { background: rgba(16,185,129,0.2); color: #34d399; }
+        .pipe-badge.failing { background: rgba(239,68,68,0.2); color: #f87171; }
+        .pipe-desc {
+            font-size: 0.7rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* ── SERVICES GRID (Col 1) ── */
+        .services-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .svc-link {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.5rem;
-        }
-
-        .grid-links {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .grid-status {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: var(--card-shadow);
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            text-decoration: none;
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-        }
-
-        a.card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .link-card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 0.5rem;
-            color: #e2e8f0;
-        }
-
-        .link-card p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-        
-        .card-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Status Cards */
-        .status-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .badge-failure { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .badge-running { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-        .badge-unknown { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
-
-        .meta-list {
-            list-style: none;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-        
-        .meta-list li {
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .meta-value {
-            color: #e2e8f0;
-            font-weight: 500;
-        }
-        
-        /* Reports Section */
-        .reports-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 3rem;
-        }
-        
-        .report-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #60a5fa;
-            padding: 0.75rem 1.5rem;
+            padding: 0.6rem 0.75rem;
             border-radius: 8px;
             text-decoration: none;
+            color: #cbd5e1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            font-size: 0.8rem;
             font-weight: 500;
-            transition: all 0.2s;
+        }
+        .svc-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59,130,246,0.3);
+            color: #93c5fd;
+        }
+        .svc-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+        .svc-label { flex: 1; }
+        .svc-arrow { font-size: 0.7rem; color: #475569; }
+
+        /* ── ARCHITECTURE DIAGRAM (Col 2) ── */
+        .arch-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 0;
+        }
+        .arch-node {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 6px;
+            padding: 0.4rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #93c5fd;
+            text-align: center;
+            width: 100%;
+            max-width: 220px;
+        }
+        .arch-node.green {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+        }
+        .arch-node.amber {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+            color: #fcd34d;
+        }
+        .arch-node.red {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        .arch-arrow {
+            color: #334155;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        /* ── SONARCLOUD CUSTOM METRICS (Col 3) ── */
+        .sonar-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .metric-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            text-align: center;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .metric-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .metric-value { font-size: 1.1rem; font-weight: 800; }
+        .metric-good { color: #34d399; text-shadow: 0 0 10px rgba(52,211,153,0.3); }
+        .metric-warn { color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.3); }
+        .metric-bad  { color: #f87171; text-shadow: 0 0 10px rgba(248,113,113,0.3); }
+
+        /* ── TECH STACK (Row 3) ── */
+        .tech-row {
+            grid-column: 1 / -1;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1.5rem;
+            padding: 0.75rem 1.2rem;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+            overflow-x: auto;
         }
-        
-        .report-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
+        .tech-row .panel-title { margin-bottom: 0; white-space: nowrap; }
+        .tech-chips {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .tech-chip {
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.05);
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
         }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* ── ENV TABLE (Col 3 middle) ── */
+        .env-table {
+            width: 100%;
+            font-size: 0.7rem;
+            border-collapse: collapse;
         }
-
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+        .env-table th {
+            text-align: left;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.3rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .env-table td {
+            padding: 0.35rem 0;
+            color: #94a3b8;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .env-table td:first-child {
+            color: #cbd5e1;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            font-size: 0.65rem;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>DevSecOps Command Center</h1>
-        <p>Real-time observability and service access for the CryptoLab Pipeline</p>
-    </header>
-
-    <!-- SECTION: Quick Links -->
-    <h2 class="section-title">🚀 Infrastructure & Services</h2>
-    <div class="grid-links">
-        <a href="https://cryptolab-sxo4.onrender.com" target="_blank" class="card link-card">
-            <div class="card-icon">🌐</div>
-            <h3>Live Application</h3>
-            <p>CryptoLab Production Site</p>
-        </a>
-        <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank" class="card link-card">
-            <div class="card-icon">🐙</div>
-            <h3>GitHub Repository</h3>
-            <p>Source Code & Workflows</p>
-        </a>
-        <a href="https://dashboard.render.com/" target="_blank" class="card link-card">
-            <div class="card-icon">☁️</div>
-            <h3>Render Dashboard</h3>
-            <p>Web Service Hosting</p>
-        </a>
-        <a href="https://console.neon.tech/" target="_blank" class="card link-card">
-            <div class="card-icon">🐘</div>
-            <h3>Neon Console</h3>
-            <p>PostgreSQL Database</p>
-        </a>
-        <a href="https://hub.docker.com/repository/docker/idkjustletmein/cryptolab" target="_blank" class="card link-card">
-            <div class="card-icon">🐳</div>
-            <h3>Docker Hub</h3>
-            <p>Container Registry</p>
-        </a>
-        <a href="https://sonarcloud.io/project/overview?id=idkjustletmein_cicd-crypto" target="_blank" class="card link-card">
-            <div class="card-icon">🛡️</div>
-            <h3>SonarCloud</h3>
-            <p>SAST Security Dashboard</p>
-        </a>
-        <a href="https://idkjustletmein.grafana.net/a/grafana-synthetic-monitoring-app/checks/2294?from=now-15m&to=now&timezone=browser&var-probe=$__all&var-job=cryptolab-production-http&var-instance=https:%2F%2Fcryptolab-sxo4.onrender.com&refresh=5s" target="_blank" class="card link-card">
-            <div class="card-icon">📈</div>
-            <h3>Grafana Synthetics</h3>
-            <p>Uptime & Latency Monitoring</p>
-        </a>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>⚡ DevSecOps Command Center</h1>
+        <div class="header-right">
+            <div class="health-indicator">
+                <div class="health-dot" id="health-dot"></div>
+                <span id="health-text">Checking...</span>
+            </div>
+            <div class="clock">Last sync: <span id="clock">--</span></div>
+        </div>
     </div>
 
-    <!-- SECTION: Pipeline Statuses (Dynamic) -->
-    <h2 class="section-title">⚙️ Latest Pipeline Executions</h2>
-    <div class="grid-status" id="pipeline-container">
-        <!-- Cards injected via JS -->
-        <div class="card"><div class="loader"></div> Loading workflow sync...</div>
-    </div>
+    <!-- MAIN GRID -->
+    <div class="main-grid">
 
-    <!-- SECTION: Security & Performance Artifacts -->
-    <h2 class="section-title">📁 Latest Artifact Reports</h2>
-    <p style="color: var(--text-muted); margin-bottom: 1rem;">Note: Automatically fetched direct downloads for the most recent completed pipeline runs.</p>
-    <div class="reports-grid" id="artifacts-container">
-        <div class="loader"></div>
+        <!-- ROW 1: Pipeline Status Badges -->
+        <div class="pipeline-row">
+            <div class="pipeline-card">
+                <div class="pipe-head">
+                    <h3>🔬 Dev Pipeline</h3>
+                    <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dev.yml" target="_blank" class="pipe-badge passing" style="text-decoration:none;">View Runs →</a>
+                </div>
+                <div class="pipe-desc">Trigger: Push to <code>develop</code><br>Pytest → Auto PR → SonarCloud SAST → Auto Merge</div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipe-head">
+                    <h3>📦 Staging Pipeline</h3>
+                    <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/staging.yml" target="_blank" class="pipe-badge passing" style="text-decoration:none;">View Runs →</a>
+                </div>
+                <div class="pipe-desc">Trigger: Merge to <code>main</code><br>Trivy SCA → Docker Build → Push to Hub → Deploy to Render</div>
+            </div>
+            <div class="pipeline-card">
+                <div class="pipe-head">
+                    <h3>🔥 DAST & Load Testing</h3>
+                    <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dast.yml" target="_blank" class="pipe-badge passing" style="text-decoration:none;">View Runs →</a>
+                </div>
+                <div class="pipe-desc">Trigger: Manual Dispatch<br>OWASP ZAP → k6 Load Test → Artifact Reports</div>
+            </div>
+        </div>
+
+        <!-- COL 1: Service Links -->
+        <div class="panel">
+            <div class="panel-title">Infrastructure Services</div>
+            <div class="services-list">
+                <a href="https://cryptolab-sxo4.onrender.com" target="_blank" class="svc-link">
+                    <span class="svc-icon">🌐</span><span class="svc-label">CryptoLab Live</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://dashboard.render.com/web/srv-d5r0171r0fns73dr8i10" target="_blank" class="svc-link">
+                    <span class="svc-icon">☁️</span><span class="svc-label">Render Dashboard</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://console.neon.tech/app/projects/still-sky-98718666" target="_blank" class="svc-link">
+                    <span class="svc-icon">🐘</span><span class="svc-label">Neon PostgreSQL</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://hub.docker.com/repository/docker/ohnoitsmustafa/cryptolab/general" target="_blank" class="svc-link">
+                    <span class="svc-icon">🐳</span><span class="svc-label">Docker Hub</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://sonarcloud.io/project/overview?id=idkjustletmein_cicd-crypto" target="_blank" class="svc-link">
+                    <span class="svc-icon">🛡️</span><span class="svc-label">SonarCloud SAST</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://idkjustletmein.grafana.net/a/grafana-synthetic-monitoring-app/checks/2294?from=now-15m&to=now&timezone=browser&var-probe=$__all&var-job=cryptolab-production-http&var-instance=https:%2F%2Fcryptolab-sxo4.onrender.com&refresh=5s" target="_blank" class="svc-link">
+                    <span class="svc-icon">📈</span><span class="svc-label">Grafana Monitoring</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank" class="svc-link">
+                    <span class="svc-icon">🐙</span><span class="svc-label">GitHub Repository</span><span class="svc-arrow">↗</span>
+                </a>
+                <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dast.yml" target="_blank" class="svc-link" style="background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.2); color:#fcd34d;">
+                    <span class="svc-icon">⚡</span><span class="svc-label">Trigger DAST Manually</span><span class="svc-arrow">↗</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- COL 2: Architecture Diagram -->
+        <div class="panel">
+            <div class="panel-title">Pipeline Architecture</div>
+            <div class="arch-flow">
+                <div class="arch-node">📝 git push → develop</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node">🧪 Pytest Unit Tests</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node green">🔀 Auto PR → main</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node green">🛡️ SonarCloud SAST Gate</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node amber">📦 Trivy SCA → Docker Build</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node amber">🚀 Deploy to Render</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node red">🔥 OWASP ZAP + k6</div>
+                <div class="arch-arrow">↓</div>
+                <div class="arch-node" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3);color:#c4b5fd;">📢 Discord Alert</div>
+            </div>
+        </div>
+
+        <!-- COL 3: Badges + Env Vars -->
+        <div class="panel" style="display:flex; flex-direction:column; gap:1rem;">
+            <div>
+                <div class="panel-title">SonarCloud Quality Gate</div>
+                <div class="sonar-metrics-grid" id="sonar-metrics">
+                    <div class="metric-card"><span class="metric-label">Loading...</span><span class="metric-value metric-good">--</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="panel-title">Environment Secrets Map</div>
+                <table class="env-table">
+                    <tr><th>Secret</th><th>Location</th></tr>
+                    <tr><td>DATABASE_URL</td><td>Render Env</td></tr>
+                    <tr><td>DJANGO_SECRET_KEY</td><td>Render Env</td></tr>
+                    <tr><td>DOCKER_USERNAME</td><td>GitHub Secrets</td></tr>
+                    <tr><td>DOCKER_PASSWORD</td><td>GitHub Secrets</td></tr>
+                    <tr><td>RENDER_DEPLOY_HOOK</td><td>GitHub Secrets</td></tr>
+                    <tr><td>DISCORD_WEBHOOK</td><td>GitHub Secrets</td></tr>
+                    <tr><td>SONAR_TOKEN</td><td>GitHub Secrets</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- ROW 3: Tech Stack -->
+        <div class="tech-row">
+            <div class="panel-title">Tech Stack</div>
+            <div class="tech-chips">
+                <span class="tech-chip">🐍 Python 3.12</span>
+                <span class="tech-chip">🌿 Django 5</span>
+                <span class="tech-chip">🐘 PostgreSQL 17</span>
+                <span class="tech-chip">🐳 Docker</span>
+                <span class="tech-chip">⚙️ GitHub Actions</span>
+                <span class="tech-chip">🛡️ SonarCloud</span>
+                <span class="tech-chip">📦 Trivy</span>
+                <span class="tech-chip">🔥 OWASP ZAP</span>
+                <span class="tech-chip">🏎️ k6</span>
+                <span class="tech-chip">📈 Grafana</span>
+                <span class="tech-chip">☁️ Render</span>
+                <span class="tech-chip">🗄️ Neon.tech</span>
+                <span class="tech-chip">💬 Discord Webhooks</span>
+            </div>
+        </div>
     </div>
-</div>
 
 <script>
-    const REPO = 'idkjustletmein/cicd-crypto';
-    const API_BASE = `https://api.github.com/repos/${REPO}`;
-
-    // Map workflow file names to display names
-    const WORKFLOW_MAP = {
-        'dev.yml': 'Development Pipeline (Test -> Auto PR)',
-        'staging.yml': 'Staging Pipeline (Trivy -> Docker -> Deploy)',
-        'dast.yml': 'DAST & Load Testing (ZAP + k6)'
-    };
-
-    function getBadgeClass(status, conclusion) {
-        if (status !== 'completed') return 'badge-running';
-        if (conclusion === 'success') return 'badge-success';
-        if (conclusion === 'failure') return 'badge-failure';
-        return 'badge-unknown';
-    }
-
-    function formatDate(dateString) {
-        return new Date(dateString).toLocaleString();
-    }
-
-    async function fetchPipelines() {
+    // ── Live Health Check ──
+    async function checkHealth() {
+        const dot = document.getElementById('health-dot');
+        const text = document.getElementById('health-text');
         try {
-            const res = await fetch(`${API_BASE}/actions/runs?per_page=30`);
+            const start = performance.now();
+            const res = await fetch('https://cryptolab-sxo4.onrender.com/', { mode: 'no-cors' });
+            const ms = Math.round(performance.now() - start);
+            dot.className = 'health-dot online';
+            text.textContent = `Online (${ms}ms)`;
+            text.style.color = '#22c55e';
+        } catch {
+            dot.className = 'health-dot offline';
+            text.textContent = 'Unreachable';
+            text.style.color = '#ef4444';
+        }
+    }
+
+    // ── Clock ──
+    function updateClock() {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }
+
+    // ── SonarCloud Metrics (Custom API Fetch) ──
+    async function fetchSonarMetrics() {
+        try {
+            const res = await fetch('https://sonarcloud.io/api/measures/component?component=idkjustletmein_cicd-crypto&metricKeys=alert_status,security_rating,reliability_rating,sqale_rating,vulnerabilities,bugs');
             const data = await res.json();
-            
-            const container = document.getElementById('pipeline-container');
-            container.innerHTML = ''; // Clear loader
+            const measures = data.component.measures;
+            const metricsMap = {};
+            measures.forEach(m => metricsMap[m.metric] = m.value);
 
-            // We only want the most recent run for each workflow type
-            const latestRuns = {};
-            data.workflow_runs.forEach(run => {
-                const wfName = run.path.split('/').pop();
-                if (WORKFLOW_MAP[wfName] && !latestRuns[wfName]) {
-                    latestRuns[wfName] = run;
+            // Convert numerical API rating (1, 2, 3...) to Letter Grades
+            const getRating = (val) => {
+                const map = {'1.0': 'A', '2.0': 'B', '3.0': 'C', '4.0': 'D', '5.0': 'E'};
+                return map[val] || val;
+            };
+
+            const getColor = (displayVal, isRating, isStatus) => {
+                if (isStatus) return displayVal === 'PASSED' ? 'metric-good' : 'metric-bad';
+                if (isRating) {
+                    if (displayVal === 'A') return 'metric-good';
+                    if (displayVal === 'B' || displayVal === 'C') return 'metric-warn';
+                    return 'metric-bad';
                 }
-            });
+                // For raw numbers like bugs/vulnerabilities
+                if (displayVal === '0') return 'metric-good';
+                if (parseInt(displayVal) <= 5) return 'metric-warn';
+                return 'metric-bad';
+            };
 
-            // Handle artifacts while we parse runs
-            const artifactsContainer = document.getElementById('artifacts-container');
-            artifactsContainer.innerHTML = '';
-
-            // Render Pipeline Cards
-            for (const [wfName, run] of Object.entries(latestRuns)) {
-                const statusText = run.status !== 'completed' ? run.status : run.conclusion;
-                const badgeClass = getBadgeClass(run.status, run.conclusion);
+            const buildCard = (key, label, type) => {
+                let rawVal = metricsMap[key] || 'N/A';
+                let displayVal = rawVal;
                 
-                const cardHtml = `
-                    <a href="${run.html_url}" target="_blank" class="card">
-                        <div class="status-header">
-                            <h3>${WORKFLOW_MAP[wfName]}</h3>
-                            <span class="status-badge ${badgeClass}">${statusText}</span>
-                        </div>
-                        <ul class="meta-list">
-                            <li><span>Trigger:</span> <span class="meta-value">${run.event}</span></li>
-                            <li><span>Branch:</span> <span class="meta-value">${run.head_branch}</span></li>
-                            <li><span>Commit:</span> <span class="meta-value">${run.head_sha.substring(0,7)}</span></li>
-                            <li><span>Date:</span> <span class="meta-value">${formatDate(run.updated_at)}</span></li>
-                        </ul>
-                    </a>
+                if (type === 'rating') displayVal = getRating(rawVal);
+                if (type === 'status') displayVal = rawVal === 'OK' ? 'PASSED' : 'FAILED';
+                
+                const colorClass = getColor(displayVal, type === 'rating', type === 'status');
+                
+                return `
+                    <div class="metric-card">
+                        <span class="metric-label">${label}</span>
+                        <span class="metric-value ${colorClass}">${displayVal}</span>
+                    </div>
                 `;
-                container.innerHTML += cardHtml;
-                
-                // Fetch Artifacts for this specific run (since DAST has ZAP/k6, Dev has Pytest, Staging has Trivy)
-                if (run.status === 'completed') {
-                    fetchArtifactsForRun(run.id, run.html_url);
-                }
-            }
+            };
 
-        } catch (error) {
-            document.getElementById('pipeline-container').innerHTML = `<p style="color: var(--danger)">Failed to load pipelines from GitHub API.</p>`;
-        }
-    }
-    
-    // Artifact Mapping for Display
-    const ARTIFACT_NAMES = {
-        'zap-report': 'OWASP ZAP Report (HTML)',
-        'k6-results': 'k6 Load Test Results (HTML/JSON)',
-        'trivy-report': 'Trivy Scan Results (SARIF)',
-        'coverage': 'Pytest Coverage Report'
-    };
+            const container = document.getElementById('sonar-metrics');
+            container.innerHTML = 
+                buildCard('alert_status', 'Quality Gate', 'status') +
+                buildCard('security_rating', 'Security', 'rating') +
+                buildCard('reliability_rating', 'Reliability', 'rating') +
+                buildCard('sqale_rating', 'Maintainable', 'rating') +
+                buildCard('vulnerabilities', 'Vulns', 'number') +
+                buildCard('bugs', 'Bugs', 'number');
 
-    async function fetchArtifactsForRun(runId, runUrl) {
-        try {
-            const res = await fetch(`${API_BASE}/actions/runs/${runId}/artifacts`);
-            const data = await res.json();
-            
-            const container = document.getElementById('artifacts-container');
-            
-            data.artifacts.forEach(art => {
-                const displayName = ARTIFACT_NAMES[art.name] || art.name;
-                // If it's a known artifact or has report in the name
-                if (ARTIFACT_NAMES[art.name] || art.name.includes('report') || art.name.includes('results')) {
-                    // Since GitHub API requires auth to download artifacts directly via API url, 
-                    // we direct users to the run page OR use the suite URL trick if authenticated locally.
-                    // For a public static dashboard, linking to the GitHub Actions run bottom section is safest.
-                    container.innerHTML += `
-                        <a href="${runUrl}" target="_blank" class="report-btn" title="View run to download artifact: ${art.name}">
-                            ⬇️ ${displayName}
-                        </a>
-                    `;
-                }
-            });
         } catch (e) {
-            console.error("Artifact fetch error", e);
+            document.getElementById('sonar-metrics').innerHTML = `<div class="metric-label" style="grid-column:1/-1; color:#f87171">Failed to load SonarCloud metrics</div>`;
         }
     }
 
-    // Initialize
-    fetchPipelines();
-    // Refresh every 60 seconds
-    setInterval(fetchPipelines, 60000);
-
+    // Init
+    checkHealth();
+    fetchSonarMetrics();
+    updateClock();
+    setInterval(checkHealth, 30000);
+    setInterval(fetchSonarMetrics, 120000); // 2 min refresh
+    setInterval(updateClock, 1000);
 </script>
 </body>
 </html>
