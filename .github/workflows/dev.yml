@@ -293,11 +293,29 @@ jobs:
           PASS_ICON="✅"
           FAIL_ICON="❌"
           
-          # --- SonarCloud ---
+          # --- SonarCloud Stats API ---
+          SONAR_URL="https://sonarcloud.io/api/measures/component?component=idkjustletmein_cicd-crypto&metricKeys=security_rating,vulnerabilities,bugs"
+          SONAR_JSON=$(curl -s "$SONAR_URL" || echo "{}")
+          SEC_RATING=$(echo "$SONAR_JSON" | jq -r '.component.measures[]? | select(.metric=="security_rating") | .value' || echo "")
+          VULNS=$(echo "$SONAR_JSON" | jq -r '.component.measures[]? | select(.metric=="vulnerabilities") | .value' || echo "N/A")
+          BUGS=$(echo "$SONAR_JSON" | jq -r '.component.measures[]? | select(.metric=="bugs") | .value' || echo "N/A")
+          
+          case "$SEC_RATING" in
+             "1.0") SEC_ABC="A (Safe)" ;;
+             "2.0") SEC_ABC="B" ;;
+             "3.0") SEC_ABC="C" ;;
+             "4.0") SEC_ABC="D" ;;
+             "5.0") SEC_ABC="E (Risky)" ;;
+             *) SEC_ABC="N/A" ;;
+          esac
+          
+          SONAR_STATS="> 📊 **Metrics:** Security: \`$SEC_ABC\` | Vulns: \`$VULNS\` | Bugs: \`$BUGS\`"
+
+          # --- SonarCloud Status ---
           if [ "${{ needs.sonarcloud.result }}" == "success" ]; then
-            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed"
+            SONAR_STATUS="$PASS_ICON **SonarCloud**\\nQuality Gate Passed\\n$SONAR_STATS"
           else
-            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed"
+            SONAR_STATUS="$FAIL_ICON **SonarCloud**\\nQuality Gate Failed\\n$SONAR_STATS"
           fi
           
           # --- Auto Merge ---
