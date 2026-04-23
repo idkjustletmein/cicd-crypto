@@ -9,7 +9,7 @@ An interactive web application for learning and experimenting with classical and
 ## ✨ Features
 
 ### 🔑 Encryption Tools
-Encrypt and decrypt text using **11 classical ciphers**:
+Encrypt and decrypt things using **11 classical ciphers**:
 
 | Cipher | Type | Description |
 |--------|------|-------------|
