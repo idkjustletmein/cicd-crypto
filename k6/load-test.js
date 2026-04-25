@@ -2,75 +2,116 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
-// ── Configuration ──────────────────────────────────────────────
 const BASE_URL = __ENV.TARGET_URL || 'https://cryptolab-sxo4.onrender.com';
 
+// Random helper
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Random sleep (real users ≠ robots)
+function thinkTime() {
+  sleep(Math.random() * 2 + 0.5); // 0.5s → 2.5s
+}
+
+// Random test data
+function randomPayload() {
+  const texts = ['HELLO', 'SECURITY', 'CRYPTO', 'TEST123', 'K6LOAD'];
+  const keys = ['1', '3', '5', '7'];
+
+  return JSON.stringify({
+    cipher: 'caesar',
+    plaintext: texts[randomInt(0, texts.length - 1)],
+    key: keys[randomInt(0, keys.length - 1)],
+  });
+}
+
 export const options = {
-  stages: [
-    // Stage 1: Smoke test — baseline sanity
-    { duration: '30s', target: 1 },
-    // Stage 2: Load test — ramp to 10 VUs
-    { duration: '1m',  target: 10 },
-    // Stage 3: Cooldown — graceful ramp-down
-    { duration: '30s', target: 0 },
-  ],
+  scenarios: {
+    browsing_users: {
+      executor: 'ramping-vus',
+      startVUs: 5,
+      stages: [
+        { duration: '1m', target: 20 },
+        { duration: '2m', target: 50 },
+        { duration: '2m', target: 50 },
+        { duration: '1m', target: 0 },
+      ],
+    },
+
+    api_users: {
+      executor: 'constant-vus',
+      vus: 20,
+      duration: '5m',
+    },
+  },
+
   thresholds: {
-    http_req_duration: ['p(95)<2000'],  // 95% of requests under 2s
-    http_req_failed:   ['rate<0.05'],   // Error rate under 5%
+    http_req_duration: ['p(95)<1000'], // stricter now
+    http_req_failed: ['rate<0.02'],    // max 2% errors
   },
 };
 
-// ── Test Scenarios ─────────────────────────────────────────────
-export default function () {
-  // 1. Home page
+// ── Scenario 1: Browsing behavior ──
+export function browsing_users() {
   let homeRes = http.get(`${BASE_URL}/`);
-  
-  // Extract the CSRF Token cookie that Django sets
+
   let csrfToken = '';
-  if (homeRes.cookies.csrftoken && homeRes.cookies.csrftoken.length > 0) {
+  if (homeRes.cookies.csrftoken) {
     csrfToken = homeRes.cookies.csrftoken[0].value;
   }
 
   check(homeRes, {
-    'Home: status 200': (r) => r.status === 200,
-    'Home: has CryptoLab': (r) => r.body.includes('CryptoLab'),
+    'Home OK': (r) => r.status === 200,
+    'Home has CryptoLab': (r) => r.body.includes('CryptoLab'),
   });
 
-  sleep(1);
+  thinkTime();
 
-  // 2. Learn page
-  let learnRes = http.get(`${BASE_URL}/learn/`);
-  check(learnRes, {
-    'Learn: status 200': (r) => r.status === 200,
+  // Random navigation path
+  if (Math.random() > 0.5) {
+    let learnRes = http.get(`${BASE_URL}/learn/`);
+    check(learnRes, { 'Learn OK': (r) => r.status === 200 });
+  } else {
+    let aboutRes = http.get(`${BASE_URL}/about/`);
+    check(aboutRes, { 'About OK': (r) => r.status === 200 });
+  }
+
+  thinkTime();
+
+  // 70% of users use the API
+  if (Math.random() < 0.7) {
+    let res = http.post(`${BASE_URL}/encrypt/`, randomPayload(), {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+    });
+
+    check(res, {
+      'Encrypt OK': (r) => r.status === 200,
+      'Encrypt has result': (r) => {
+        try {
+          return JSON.parse(r.body).result !== undefined;
+        } catch (e) {
+          return false;
+        }
+      },
+    });
+  }
+
+  thinkTime();
+}
+
+// ── Scenario 2: API-heavy users ──
+export function api_users() {
+  let res = http.post(`${BASE_URL}/encrypt/`, randomPayload(), {
+    headers: { 'Content-Type': 'application/json' },
   });
 
-  sleep(1);
-
-  // 3. About page
-  let aboutRes = http.get(`${BASE_URL}/about/`);
-  check(aboutRes, {
-    'About: status 200': (r) => r.status === 200,
-  });
-
-  sleep(1);
-
-  // 4. Encrypt API — Caesar cipher
-  let encryptPayload = JSON.stringify({
-    cipher: 'caesar',
-    plaintext: 'HELLO WORLD',
-    key: '3',
-  });
-
-  let encryptRes = http.post(`${BASE_URL}/encrypt/`, encryptPayload, {
-    headers: { 
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken  // Pass the extracted token to bypass Forbidden checks
-    },
-  });
-
-  check(encryptRes, {
-    'Encrypt: status 200': (r) => r.status === 200,
-    'Encrypt: has result': (r) => {
+  check(res, {
+    'API OK': (r) => r.status === 200,
+    'API has result': (r) => {
       try {
         return JSON.parse(r.body).result !== undefined;
       } catch (e) {
@@ -79,12 +120,13 @@ export default function () {
     },
   });
 
-  sleep(1);
+  sleep(Math.random()); // short delay
 }
 
+// ── Report ──
 export function handleSummary(data) {
   return {
     "summary.html": htmlReport(data),
-    "summary.json": JSON.stringify(data), // We can optionally keep JSON just in case
+    "summary.json": JSON.stringify(data),
   };
 }
