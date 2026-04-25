@@ -30,6 +30,7 @@ def learn(request):
     return render(request, 'learn.html', {'ciphers': ciphers})
 
 
+@require_http_methods(["GET"])
 def compare(request):
     """Render the compare page."""
     ciphers = get_all_ciphers()
@@ -50,6 +51,7 @@ def security(request):
 
 # ─── Authentication Views ─────────────────────────────────────────
 
+@require_http_methods(["GET", "POST"])
 def register_view(request):
     """Handle user registration."""
     if request.user.is_authenticated:
@@ -68,6 +70,7 @@ def register_view(request):
     return render(request, 'register.html', {'form': form})
 
 
+@require_http_methods(["GET", "POST"])
 def login_view(request):
     """Handle user login."""
     if request.user.is_authenticated:
@@ -94,6 +97,7 @@ def login_view(request):
     return render(request, 'login.html')
 
 
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
     """Handle user logout."""
     logout(request)
@@ -154,6 +158,7 @@ def api_delete_history(request):
 # ─── File Upload Views ─────────────────────────────────────────────
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def upload_key_view(request):
     """Handle key file uploads."""
     if request.method == 'POST':
@@ -264,8 +269,8 @@ def encrypt(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': f'Encryption failed: {str(e)}'}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Encryption failed due to an internal server error.'}, status=500)
 
 
 @require_http_methods(["POST"])
@@ -315,8 +320,8 @@ def decrypt(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': f'Decryption failed: {str(e)}'}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Decryption failed due to an internal server error.'}, status=500)
 
 
 @require_http_methods(["GET"])

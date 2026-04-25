@@ -77,6 +77,21 @@ class TestEncryptView:
         )
         assert response.status_code == 400
 
+    def test_encrypt_internal_server_error(self, client):
+        from unittest.mock import patch
+        with patch('cryptolab.ciphers.caesar.CaesarCipher.encrypt', side_effect=Exception("Simulated failure")):
+            response = client.post(
+                '/encrypt/',
+                data=json.dumps({
+                    'cipher': 'caesar',
+                    'plaintext': 'HELLO',
+                    'key': '3'
+                }),
+                content_type='application/json'
+            )
+            assert response.status_code == 500
+            assert response.json()['error'] == 'Encryption failed due to an internal server error.'
+
 
 class TestDecryptView:
     """Tests for the decrypt API endpoint."""
@@ -108,6 +123,21 @@ class TestDecryptView:
         assert response.status_code == 200
         data = response.json()
         assert data['result'] == 'HELLO'
+
+    def test_decrypt_internal_server_error(self, client):
+        from unittest.mock import patch
+        with patch('cryptolab.ciphers.caesar.CaesarCipher.decrypt', side_effect=Exception("Simulated failure")):
+            response = client.post(
+                '/decrypt/',
+                data=json.dumps({
+                    'cipher': 'caesar',
+                    'ciphertext': 'KHOOR',
+                    'key': '3'
+                }),
+                content_type='application/json'
+            )
+            assert response.status_code == 500
+            assert response.json()['error'] == 'Decryption failed due to an internal server error.'
 
 
 class TestCiphersAPIView:
@@ -329,3 +359,34 @@ class TestFileUpload:
         response = client.post('/upload-key/', {'cipher_type': 'AES'})
         assert response.status_code == 400
         assert response.json()['error'] == 'Invalid file'
+
+
+class TestSettings:
+    """Tests for settings configuration."""
+    
+    def test_production_secret_key_check(self):
+        import importlib
+        import os
+        from cryptolab import settings
+        
+        orig_debug = os.environ.get('DEBUG')
+        orig_key = os.environ.get('DJANGO_SECRET_KEY')
+        
+        try:
+            os.environ['DEBUG'] = 'False'
+            os.environ['DJANGO_SECRET_KEY'] = 'django-insecure-dev-key-change-in-production'
+            
+            with pytest.raises(ValueError, match="DJANGO_SECRET_KEY must be set in production"):
+                importlib.reload(settings)
+        finally:
+            if orig_debug is not None:
+                os.environ['DEBUG'] = orig_debug
+            else:
+                os.environ.pop('DEBUG', None)
+                
+            if orig_key is not None:
+                os.environ['DJANGO_SECRET_KEY'] = orig_key
+            else:
+                os.environ.pop('DJANGO_SECRET_KEY', None)
+                
+            importlib.reload(settings)
