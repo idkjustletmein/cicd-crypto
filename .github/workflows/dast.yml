@@ -20,12 +20,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.14.0
+      - name: Run OWASP ZAP Full Active Scan
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
           target: ${{ github.event.inputs.target_url }}
           rules_file_name: 'zap/rules.tsv'
-          cmd_options: '-I'
+          cmd_options: '-I -j -z "-config scanner.attackStrength=HIGH -config scanner.alertThreshold=LOW"'
           allow_issue_writing: false
         continue-on-error: true
 
@@ -105,11 +105,11 @@ jobs:
           
           # --- ZAP ---
           if [ "${{ needs.dast_scan.result }}" == "success" ]; then
-            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nBaseline scan completed — no critical alerts$ZAP_LINK"
+            ZAP_STATUS="$PASS_ICON **OWASP ZAP DAST**\\nFull Active scan completed — no critical alerts$ZAP_LINK"
           elif [ "${{ needs.dast_scan.result }}" == "skipped" ]; then
             ZAP_STATUS="$SKIP_ICON **OWASP ZAP DAST**\\nSkipped"
           else
-            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nScan completed with findings$ZAP_LINK"
+            ZAP_STATUS="$FAIL_ICON **OWASP ZAP DAST**\\nFull Active scan completed with findings$ZAP_LINK"
           fi
           
           # --- k6 ---
