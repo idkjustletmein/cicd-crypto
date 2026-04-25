@@ -266,7 +266,7 @@ def encrypt(request):
         })
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({'error': INVALID_JSON_ERROR}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception:
@@ -317,7 +317,7 @@ def decrypt(request):
         })
         
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({'error': INVALID_JSON_ERROR}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception:
