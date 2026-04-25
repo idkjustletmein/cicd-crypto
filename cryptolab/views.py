@@ -264,8 +264,8 @@ def encrypt(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': f'Encryption failed: {str(e)}'}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Encryption failed due to an internal server error.'}, status=500)
 
 
 @require_http_methods(["POST"])
@@ -315,8 +315,8 @@ def decrypt(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': f'Decryption failed: {str(e)}'}, status=500)
+    except Exception:
+        return JsonResponse({'error': 'Decryption failed due to an internal server error.'}, status=500)
 
 
 @require_http_methods(["GET"])

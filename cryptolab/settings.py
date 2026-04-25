@@ -9,9 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# Ensure we don't run production with the insecure dev key
+if not DEBUG and SECRET_KEY == 'django-insecure-dev-key-change-in-production':
+    raise ValueError("DJANGO_SECRET_KEY must be set in production")
+
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cryptolab-sxo4.onrender.com',
@@ -56,7 +60,6 @@ TEMPLATES = [
     },
 ]
 
-import os
 import dj_database_url
 
 DATABASES = {
