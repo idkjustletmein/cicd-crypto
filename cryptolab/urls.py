@@ -24,6 +24,7 @@ urlpatterns = [
     path('upload-key/', views.upload_key_view, name='upload_key'),
     
     # API endpoints
+    path('health/', views.health_check, name='health_check'),
     path('encrypt/', views.encrypt, name='encrypt'),
     path('decrypt/', views.decrypt, name='decrypt'),
     path('api/ciphers/', views.get_ciphers, name='get_ciphers'),
