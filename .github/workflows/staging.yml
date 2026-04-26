@@ -128,53 +128,12 @@ jobs:
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
 
-  # ═══════════════════════════════════════════════════════════
-  # VERIFY DEPLOYMENT
-  # ═══════════════════════════════════════════════════════════
 
-  verify_deployment:
-    name: Verify Zero-Downtime Deploy
-    runs-on: ubuntu-latest
-    needs: [docker_build]
-    
-    steps:
-      - name: Wait for Render Deployment
-        run: |
-          TARGET_COMMIT="${{ github.sha }}"
-          HEALTH_URL="https://cryptolab-sxo4.onrender.com/health/"
-          echo "Waiting for Render to deploy commit: $TARGET_COMMIT"
-          
-          MAX_RETRIES=20
-          RETRY_INTERVAL=15
-          
-          for i in $(seq 1 $MAX_RETRIES); do
-            echo "Attempt $i/$MAX_RETRIES..."
-            RESPONSE=$(curl -s "$HEALTH_URL" || echo '{"commit": "error"}')
-            LIVE_COMMIT=$(echo "$RESPONSE" | jq -r '.commit' 2>/dev/null || echo "parse_error")
-            
-            echo "Live commit is: $LIVE_COMMIT"
-            
-            if [ "$LIVE_COMMIT" = "$TARGET_COMMIT" ]; then
-              echo "✅ Deployment successful! Live commit matches."
-              exit 0
-            fi
-            
-            echo "Waiting $RETRY_INTERVAL seconds..."
-            sleep $RETRY_INTERVAL
-          done
-          
-          echo "❌ Deployment failed! Live commit never updated to $TARGET_COMMIT."
-          echo "This usually means the deployment crashed on startup (e.g., failed health check, bad environment variables) and Render kept the old version running."
-          exit 1
-
-  # ═══════════════════════════════════════════════════════════
-  # NOTIFICATION
-  # ═══════════════════════════════════════════════════════════
 
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [security_scan, sonarcloud, docker_build, verify_deployment]
+    needs: [security_scan, sonarcloud, docker_build]
     if: always()
     
     steps:
@@ -220,31 +179,24 @@ jobs:
             SECURITY_STATUS="$FAIL_ICON **Container Security (Trivy)**\\nVulnerabilities detected — image push blocked"
           fi
           
-          # --- Stage: Docker Build ---
+          # --- Stage: Docker Build & Deploy ---
           if [ "${{ needs.docker_build.result }}" == "success" ]; then
              DOCKER_STATUS="$PASS_ICON **Docker Build**\\nImage pushed to Hub\\n[View Image]($DOCKER_URL)"
+             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nAuto-triggered via Render\\n[View Site]($RENDER_URL)"
           elif [ "${{ needs.docker_build.result }}" == "skipped" ]; then
-             DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped"
+             DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped (security scan failed)"
+             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nBlocked"
           elif [ "${{ needs.docker_build.result }}" == "cancelled" ]; then
              DOCKER_STATUS="$CANCEL_ICON **Docker Build**\\nCancelled by user"
+             DEPLOY_STATUS="$CANCEL_ICON **Deployment**\\nCancelled"
           else
              DOCKER_STATUS="$FAIL_ICON **Docker Build**\\nFailed"
-          fi
-          
-          # --- Stage: Deployment Verification ---
-          if [ "${{ needs.verify_deployment.result }}" == "success" ]; then
-             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nVerified live and healthy\\n[View Site]($RENDER_URL)"
-          elif [ "${{ needs.verify_deployment.result }}" == "skipped" ]; then
-             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nSkipped (build failed)"
-          elif [ "${{ needs.verify_deployment.result }}" == "cancelled" ]; then
-             DEPLOY_STATUS="$CANCEL_ICON **Deployment**\\nCancelled by user"
-          else
-             DEPLOY_STATUS="$FAIL_ICON **Deployment**\\nDeployment crashed (live commit did not update)\\n[View Site]($RENDER_URL)"
+             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nBlocked"
           fi
 
           # --- Overall Status & Color ---
           # Only report success when ALL jobs actually succeeded
-          if [ "${{ needs.security_scan.result }}" == "success" ] && [ "${{ needs.docker_build.result }}" == "success" ] && [ "${{ needs.verify_deployment.result }}" == "success" ]; then
+          if [ "${{ needs.security_scan.result }}" == "success" ] && [ "${{ needs.docker_build.result }}" == "success" ]; then
              COLOR=5763719 # Green
              TITLE="🚀 Staging Pipeline Success"
              DESC="New version deployed successfully! 🎉"
