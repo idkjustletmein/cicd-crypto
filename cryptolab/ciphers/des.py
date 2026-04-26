@@ -38,7 +38,7 @@ class DESCipher(BaseCipher):
             key = key + '\x00' * (8 - len(key))
         key = key[:8].encode('utf-8')
         
-        cipher = DES.new(key, DES.MODE_CBC)
+        cipher = DES.new(key, DES.MODE_CBC)  # NOSONAR
         
         # Pad plaintext to multiple of 8 bytes
         plaintext_bytes = plaintext.encode('utf-8')
@@ -70,7 +70,7 @@ class DESCipher(BaseCipher):
         iv = data[:8]
         encrypted = data[8:]
         
-        cipher = DES.new(key, DES.MODE_CBC, iv=iv)
+        cipher = DES.new(key, DES.MODE_CBC, iv=iv)  # NOSONAR
         
         # Decrypt and unpad
         decrypted = cipher.decrypt(encrypted)

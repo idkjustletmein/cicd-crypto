@@ -22,7 +22,7 @@ class ColumnarCipher(BaseCipher):
         """Get column reading order based on alphabetical sort of key."""
         key = key.upper()
         # Create list of (original_index, char) sorted by (char, original_index)
-        indexed = list(enumerate(key))
+        indexed = enumerate(key)
         sorted_indexed = sorted(indexed, key=lambda x: (x[1], x[0]))
         
         # Return positions in sorted order
