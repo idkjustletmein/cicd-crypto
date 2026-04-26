@@ -17,6 +17,7 @@ class FeistelCipher(BaseCipher):
     )
     key_type = "text"
     key_hint = "Enter key (will be used to generate round keys)"
+    _KEY_REQUIRED_MSG = "Key is required"
     
     def _string_to_bits(self, text: str) -> list:
         """Convert string to list of bits."""
@@ -131,7 +132,7 @@ class FeistelCipher(BaseCipher):
     def encrypt(self, plaintext: str, key: str) -> str:
         """Encrypt using Feistel cipher. Returns hex string."""
         if not key:
-            raise ValueError("Key is required")
+            raise ValueError(self._KEY_REQUIRED_MSG)
         
         bits = self._string_to_bits(plaintext)
         
@@ -153,7 +154,7 @@ class FeistelCipher(BaseCipher):
     def decrypt(self, ciphertext: str, key: str) -> str:
         """Decrypt using Feistel cipher. Input is hex string."""
         if not key:
-            raise ValueError("Key is required")
+            raise ValueError(self._KEY_REQUIRED_MSG)
         
         bits = self._hex_to_bits(ciphertext)
         round_keys = self._generate_round_keys(key, 16)
@@ -173,7 +174,7 @@ class FeistelCipher(BaseCipher):
     @classmethod
     def validate_key(cls, key) -> tuple:
         if not key or not isinstance(key, str):
-            return False, "Key is required"
+            return False, cls._KEY_REQUIRED_MSG
         if len(key) < 1:
             return False, "Key must have at least one character"
         return True, ""

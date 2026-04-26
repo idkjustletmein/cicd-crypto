@@ -5,6 +5,10 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# Receive GitHub commit hash at build time
+ARG GIT_COMMIT_HASH="unknown"
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+
 # Set the working directory in the container
 WORKDIR /app
 

@@ -1,6 +1,7 @@
 """Views for CryptoLab application."""
 
 import json
+import os
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
@@ -328,3 +329,9 @@ def decrypt(request):
 def get_ciphers(request):
     """Return information about all available ciphers."""
     return JsonResponse(get_all_ciphers())
+
+@require_http_methods(["GET"])
+def health_check(request):
+    """Health check endpoint for deployment verification."""
+    commit_hash = os.environ.get('GIT_COMMIT_HASH', 'unknown')
+    return JsonResponse({"status": "ok", "commit": commit_hash})
