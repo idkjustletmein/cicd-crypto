@@ -133,7 +133,7 @@ jobs:
   notify:
     name: Discord Notification
     runs-on: ubuntu-latest
-    needs: [security_scan, sonarcloud, docker_build]
+    needs: [security_scan, sonarcloud, docker_build, verify_deployment]
     if: always()
     
     steps:
@@ -182,21 +182,28 @@ jobs:
           # --- Stage: Docker Build & Deploy ---
           if [ "${{ needs.docker_build.result }}" == "success" ]; then
              DOCKER_STATUS="$PASS_ICON **Docker Build**\\nImage pushed to Hub\\n[View Image]($DOCKER_URL)"
-             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nAuto-triggered via Render\\n[View Site]($RENDER_URL)"
           elif [ "${{ needs.docker_build.result }}" == "skipped" ]; then
-             DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped (security scan failed)"
-             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nBlocked"
+             DOCKER_STATUS="$SKIP_ICON **Docker Build**\\nSkipped"
           elif [ "${{ needs.docker_build.result }}" == "cancelled" ]; then
              DOCKER_STATUS="$CANCEL_ICON **Docker Build**\\nCancelled by user"
-             DEPLOY_STATUS="$CANCEL_ICON **Deployment**\\nCancelled"
           else
              DOCKER_STATUS="$FAIL_ICON **Docker Build**\\nFailed"
-             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nBlocked"
+          fi
+          
+          # --- Stage: Deployment Verification ---
+          if [ "${{ needs.verify_deployment.result }}" == "success" ]; then
+             DEPLOY_STATUS="$PASS_ICON **Deployment**\\nVerified live and healthy\\n[View Site]($RENDER_URL)"
+          elif [ "${{ needs.verify_deployment.result }}" == "skipped" ]; then
+             DEPLOY_STATUS="$SKIP_ICON **Deployment**\\nSkipped (build failed)"
+          elif [ "${{ needs.verify_deployment.result }}" == "cancelled" ]; then
+             DEPLOY_STATUS="$CANCEL_ICON **Deployment**\\nCancelled by user"
+          else
+             DEPLOY_STATUS="$FAIL_ICON **Deployment**\\nDeployment crashed (live commit did not update)\\n[View Site]($RENDER_URL)"
           fi
 
           # --- Overall Status & Color ---
           # Only report success when ALL jobs actually succeeded
-          if [ "${{ needs.security_scan.result }}" == "success" ] && [ "${{ needs.docker_build.result }}" == "success" ]; then
+          if [ "${{ needs.security_scan.result }}" == "success" ] && [ "${{ needs.docker_build.result }}" == "success" ] && [ "${{ needs.verify_deployment.result }}" == "success" ]; then
              COLOR=5763719 # Green
              TITLE="🚀 Staging Pipeline Success"
              DESC="New version deployed successfully! 🎉"
