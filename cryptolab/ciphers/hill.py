@@ -39,8 +39,6 @@ class HillCipher(BaseCipher):
     def _mod_inverse(self, a: int) -> int:
         """Get modular multiplicative inverse of a mod 26."""
         a = a % 26
-        if a < 0:
-            a += 26
         if a in self.MOD_INVERSES:
             return self.MOD_INVERSES[a]
         raise ValueError(f"No modular inverse for {a} mod 26")
@@ -49,8 +47,6 @@ class HillCipher(BaseCipher):
         """Calculate the inverse of a 2x2 matrix mod 26."""
         det = self._determinant(matrix)
         det_mod = det % 26
-        if det_mod < 0:
-            det_mod += 26
         
         det_inv = self._mod_inverse(det_mod)
         
@@ -135,8 +131,6 @@ class HillCipher(BaseCipher):
             matrix = [[numbers[0], numbers[1]], [numbers[2], numbers[3]]]
             det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
             det_mod = det % 26
-            if det_mod < 0:
-                det_mod += 26
             
             if det_mod == 0:
                 return False, "Matrix determinant cannot be 0 mod 26"
