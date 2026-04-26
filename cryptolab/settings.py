@@ -15,7 +15,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
 if not DEBUG and SECRET_KEY == 'django-insecure-dev-key-change-in-production':
     raise ValueError("DJANGO_SECRET_KEY must be set in production")
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,cryptolab-sxo4.onrender.com').split(',')
 
 CSRF_TRUSTED_ORIGINS = [
     'https://cryptolab-sxo4.onrender.com',
