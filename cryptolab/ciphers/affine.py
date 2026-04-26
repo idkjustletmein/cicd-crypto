@@ -83,7 +83,7 @@ class AffineCipher(BaseCipher):
             parts = str(key).split()
             if len(parts) != 2:
                 return False, "Key must be two numbers: 'a b'"
-            a, b = int(parts[0]), int(parts[1])
+            a, _ = int(parts[0]), int(parts[1])
             if gcd(a % 26, 26) != 1:
                 return False, f"'a' ({a}) must be coprime with 26. Valid: 1,3,5,7,9,11,15,17,19,21,23,25"
             return True, ""

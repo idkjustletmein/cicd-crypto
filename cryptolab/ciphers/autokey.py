@@ -2,6 +2,7 @@
 
 from .base import BaseCipher
 
+KEY_ERROR_MSG = "Key must contain at least one letter"
 
 class AutokeyCipher(BaseCipher):
     """
@@ -22,7 +23,7 @@ class AutokeyCipher(BaseCipher):
         """Encrypt using Autokey cipher."""
         key = ''.join(c.upper() for c in str(key) if c.isalpha())
         if not key:
-            raise ValueError("Key must contain at least one letter")
+            raise ValueError(KEY_ERROR_MSG)
         
         # Extract letters from plaintext for key extension
         plaintext_letters = ''.join(c.upper() for c in plaintext if c.isalpha())
@@ -53,7 +54,7 @@ class AutokeyCipher(BaseCipher):
         """Decrypt using Autokey cipher."""
         key = ''.join(c.upper() for c in str(key) if c.isalpha())
         if not key:
-            raise ValueError("Key must contain at least one letter")
+            raise ValueError(KEY_ERROR_MSG)
         
         result = []
         current_key = list(key)
@@ -86,5 +87,5 @@ class AutokeyCipher(BaseCipher):
             return False, "Key is required"
         clean_key = ''.join(c for c in key if c.isalpha())
         if not clean_key:
-            return False, "Key must contain at least one letter"
+            return False, KEY_ERROR_MSG
         return True, ""

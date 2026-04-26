@@ -2,6 +2,7 @@
 
 from .base import BaseCipher
 
+KEY_ERROR_MSG = "Key must contain at least one letter"
 
 class VigenereCipher(BaseCipher):
     """
@@ -18,59 +19,39 @@ class VigenereCipher(BaseCipher):
     key_type = "text"
     key_hint = "Enter keyword (letters only)"
     
-    def encrypt(self, plaintext: str, key: str) -> str:
-        """Encrypt using Vigenère cipher."""
+    def _process(self, text: str, key: str, is_encrypt: bool) -> str:
         key = ''.join(c.upper() for c in str(key) if c.isalpha())
         if not key:
-            raise ValueError("Key must contain at least one letter")
+            raise ValueError(KEY_ERROR_MSG)
         
         result = []
         key_index = 0
         
-        for char in plaintext:
+        for char in text:
             if char.isalpha():
                 base = ord('A') if char.isupper() else ord('a')
-                x = ord(char.upper()) - ord('A')
+                val = ord(char.upper()) - ord('A')
                 shift = ord(key[key_index % len(key)]) - ord('A')
-                encrypted = (x + shift) % 26
                 
-                # Preserve case
-                if char.isupper():
-                    result.append(chr(encrypted + ord('A')))
+                if is_encrypt:
+                    new_val = (val + shift) % 26
                 else:
-                    result.append(chr(encrypted + ord('a')))
+                    new_val = (val - shift) % 26
+                
+                result.append(chr(new_val + base))
                 key_index += 1
             else:
                 result.append(char)
         
         return ''.join(result)
+
+    def encrypt(self, plaintext: str, key: str) -> str:
+        """Encrypt using Vigenère cipher."""
+        return self._process(plaintext, key, is_encrypt=True)
     
     def decrypt(self, ciphertext: str, key: str) -> str:
         """Decrypt using Vigenère cipher."""
-        key = ''.join(c.upper() for c in str(key) if c.isalpha())
-        if not key:
-            raise ValueError("Key must contain at least one letter")
-        
-        result = []
-        key_index = 0
-        
-        for char in ciphertext:
-            if char.isalpha():
-                base = ord('A') if char.isupper() else ord('a')
-                y = ord(char.upper()) - ord('A')
-                shift = ord(key[key_index % len(key)]) - ord('A')
-                decrypted = (y - shift) % 26
-                
-                # Preserve case
-                if char.isupper():
-                    result.append(chr(decrypted + ord('A')))
-                else:
-                    result.append(chr(decrypted + ord('a')))
-                key_index += 1
-            else:
-                result.append(char)
-        
-        return ''.join(result)
+        return self._process(ciphertext, key, is_encrypt=False)
     
     @classmethod
     def validate_key(cls, key) -> tuple:
@@ -78,5 +59,5 @@ class VigenereCipher(BaseCipher):
             return False, "Key is required"
         clean_key = ''.join(c for c in key if c.isalpha())
         if not clean_key:
-            return False, "Key must contain at least one letter"
+            return False, KEY_ERROR_MSG
         return True, ""
