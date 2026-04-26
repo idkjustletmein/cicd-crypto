@@ -296,7 +296,7 @@ jobs:
           FAIL_ICON="❌"
           
           # --- SonarCloud Stats API ---
-          SONAR_URL="https://sonarcloud.io/api/measures/component?component=idkjustletmein_cicd-crypto&metricKeys=security_rating,vulnerabilities,bugs"
+          SONAR_URL="https://sonarcloud.io/api/measures/component?component=idkjustletmein_cicd-crypto&pullRequest=$PR_NUMBER&metricKeys=security_rating,vulnerabilities,bugs"
           SONAR_JSON=$(curl -s "$SONAR_URL" || echo "{}")
           SEC_RATING=$(echo "$SONAR_JSON" | jq -r '.component.measures[]? | select(.metric=="security_rating") | .value' || echo "")
           VULNS=$(echo "$SONAR_JSON" | jq -r '.component.measures[]? | select(.metric=="vulnerabilities") | .value' || echo "N/A")
