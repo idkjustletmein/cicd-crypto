@@ -1,4 +1,4 @@
-name: Staging Pipeline
+name: Deployment Pipeline
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -198,7 +198,7 @@ jobs:
           # Only report success when ALL jobs actually succeeded
           if [ "${{ needs.security_scan.result }}" == "success" ] && [ "${{ needs.docker_build.result }}" == "success" ]; then
              COLOR=5763719 # Green
-             TITLE="🚀 Staging Pipeline Success"
+             TITLE="🚀 Deployment Pipeline Success"
              DESC="New version deployed successfully! 🎉"
              DETAILS_FIELD=""
           else
@@ -206,10 +206,10 @@ jobs:
              
              # Distinguish between cancelled and failed
              if [ "${{ needs.security_scan.result }}" == "cancelled" ] || [ "${{ needs.docker_build.result }}" == "cancelled" ]; then
-               TITLE="🚀 Staging Pipeline Cancelled"
+               TITLE="🚀 Deployment Pipeline Cancelled"
                DESC="Pipeline was cancelled before completion."
              else
-               TITLE="🚀 Staging Pipeline Failed"
+               TITLE="🚀 Deployment Pipeline Failed"
                DESC="One or more stages failed. Deployment blocked."
              fi
              
@@ -253,7 +253,7 @@ jobs:
                 { "name": "Total Duration", "value": "$DURATION_STR", "inline": false }
                 $DETAILS_FIELD
               ],
-              "footer": { "text": "Staging Pipeline • Run #${{ github.run_number }} • Triggered by $ACTOR" },
+              "footer": { "text": "Deployment Pipeline • Run #${{ github.run_number }} • Triggered by $ACTOR" },
               "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }]
           }
