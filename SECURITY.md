@@ -19,16 +19,16 @@ All sensitive values (API tokens, credentials, webhooks) are stored as **GitHub 
 
 | Secret Name | Purpose | Pipeline |
 |---|---|---|
-| `SONAR_TOKEN` | Authenticates with SonarCloud for code quality analysis | Dev + Staging |
-| `DOCKERHUB_USERNAME` | Docker Hub account identifier for image push | Staging only |
-| `DOCKERHUB_TOKEN` | Docker Hub access token (scoped to push) | Staging only |
-| `DISCORD_WEBHOOK` | Webhook URL for sending pipeline notifications | Dev + Staging |
-| `GITHUB_TOKEN` | Auto-generated per workflow run; used for API calls (e.g., `gh` CLI) | Dev + Staging |
+| `SONAR_TOKEN` | Authenticates with SonarCloud for code quality analysis | Dev + Deployment |
+| `DOCKERHUB_USERNAME` | Docker Hub account identifier for image push | Deployment only |
+| `DOCKERHUB_TOKEN` | Docker Hub access token (scoped to push) | Deployment only |
+| `DISCORD_WEBHOOK` | Webhook URL for sending pipeline notifications | Dev + Deployment |
+| `GITHUB_TOKEN` | Auto-generated per workflow run; used for API calls (e.g., `gh` CLI) | Dev + Deployment |
 
 ### How Secrets Are Consumed
 
 ```yaml
-# Example from staging.yml
+# Example from deployment.yml
 - name: Login to Docker Hub
   uses: docker/login-action@v3
   with:
@@ -42,7 +42,7 @@ The `${{ secrets.* }}` syntax retrieves the secret at runtime. The value is **ne
 
 ## Container Security Scanning
 
-The **staging pipeline** includes an automated vulnerability scan using **Trivy** (by Aqua Security) on every Docker image before it is pushed to Docker Hub.
+The **deployment pipeline** includes an automated vulnerability scan using **Trivy** (by Aqua Security) on every Docker image before it is pushed to Docker Hub.
 
 ### What Trivy Scans
 
