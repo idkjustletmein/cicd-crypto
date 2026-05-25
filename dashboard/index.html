@@ -9,8 +9,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
 
         body {
-            background: #0a0e1a;
-            color: #e2e8f0;
+            background: #f0f4f8;
+            color: #1e293b;
             min-height: 100vh;
             display: grid;
             grid-template-rows: auto 1fr;
@@ -28,7 +28,7 @@
             font-size: 1.4rem;
             font-weight: 800;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #60a5fa, #34d399);
+            background: linear-gradient(135deg, #2563eb, #059669);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -42,7 +42,7 @@
             font-size: 0.75rem;
             color: #64748b;
         }
-        .clock span { color: #94a3b8; }
+        .clock span { color: #475569; }
         .health-indicator {
             display: flex;
             align-items: center;
@@ -53,11 +53,11 @@
         .health-dot {
             width: 10px; height: 10px;
             border-radius: 50%;
-            background: #64748b;
+            background: #94a3b8;
             animation: pulse 2s infinite;
         }
-        .health-dot.online { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
-        .health-dot.offline { background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: none; }
+        .health-dot.online { background: #16a34a; box-shadow: 0 0 8px rgba(22, 163, 74, 0.4); }
+        .health-dot.offline { background: #dc2626; box-shadow: 0 0 8px rgba(220, 38, 38, 0.4); animation: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
         /* ── MAIN GRID ── */
@@ -70,10 +70,11 @@
 
         /* ── PANELS ── */
         .panel {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         .panel-title {
             font-size: 0.7rem;
@@ -92,13 +93,14 @@
             gap: 1rem;
         }
         .pipeline-card {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 1rem 1.2rem;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         .pipeline-card .pipe-head {
             display: flex;
@@ -108,6 +110,7 @@
         .pipeline-card .pipe-head h3 {
             font-size: 0.85rem;
             font-weight: 600;
+            color: #0f172a;
         }
         .pipe-badge {
             padding: 0.2rem 0.6rem;
@@ -117,8 +120,8 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .pipe-badge.passing { background: rgba(16,185,129,0.2); color: #34d399; }
-        .pipe-badge.failing { background: rgba(239,68,68,0.2); color: #f87171; }
+        .pipe-badge.passing { background: rgba(16,185,129,0.1); color: #059669; }
+        .pipe-badge.failing { background: rgba(239,68,68,0.1); color: #dc2626; }
         .pipe-desc {
             font-size: 0.7rem;
             color: #64748b;
@@ -138,21 +141,22 @@
             padding: 0.6rem 0.75rem;
             border-radius: 8px;
             text-decoration: none;
-            color: #cbd5e1;
-            background: rgba(255,255,255,0.03);
+            color: #334155;
+            background: #f8fafc;
             border: 1px solid transparent;
             transition: all 0.15s;
             font-size: 0.8rem;
             font-weight: 500;
         }
         .svc-link:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: rgba(59,130,246,0.3);
-            color: #93c5fd;
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1d4ed8;
         }
-        .svc-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+        .svc-icon { font-size: 1.1rem; width: 24px; text-align: center; color: #475569; }
+        .svc-link:hover .svc-icon { color: #1d4ed8; }
         .svc-label { flex: 1; }
-        .svc-arrow { font-size: 0.7rem; color: #475569; }
+        .svc-arrow { font-size: 0.7rem; color: #94a3b8; }
 
         /* ── ARCHITECTURE DIAGRAM (Col 2) ── */
         .arch-flow {
@@ -163,34 +167,34 @@
             padding: 0.5rem 0;
         }
         .arch-node {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
             border-radius: 6px;
             padding: 0.4rem 1rem;
             font-size: 0.75rem;
             font-weight: 600;
-            color: #93c5fd;
+            color: #1d4ed8;
             text-align: center;
             width: 100%;
             max-width: 220px;
         }
         .arch-node.green {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.3);
-            color: #6ee7b7;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+            color: #059669;
         }
         .arch-node.amber {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.3);
-            color: #fcd34d;
+            background: #fffbeb;
+            border-color: #fde68a;
+            color: #d97706;
         }
         .arch-node.red {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
         }
         .arch-arrow {
-            color: #334155;
+            color: #94a3b8;
             font-size: 0.9rem;
             line-height: 1;
         }
@@ -203,21 +207,20 @@
             margin-bottom: 1rem;
         }
         .metric-card {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 0.6rem;
             display: flex;
             flex-direction: column;
             gap: 0.15rem;
             text-align: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
-        .metric-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .metric-label { font-size: 0.6rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
         .metric-value { font-size: 1.1rem; font-weight: 800; }
-        .metric-good { color: #34d399; text-shadow: 0 0 10px rgba(52,211,153,0.3); }
-        .metric-warn { color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.3); }
-        .metric-bad  { color: #f87171; text-shadow: 0 0 10px rgba(248,113,113,0.3); }
+        .metric-good { color: #059669; }
+        .metric-warn { color: #d97706; }
+        .metric-bad  { color: #dc2626; }
 
         /* ── TECH STACK (Row 3) ── */
         .tech-row {
@@ -226,10 +229,11 @@
             align-items: center;
             gap: 1.5rem;
             padding: 0.75rem 1.2rem;
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
             overflow-x: auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         .tech-row .panel-title { margin-bottom: 0; white-space: nowrap; }
         .tech-chips {
@@ -242,9 +246,9 @@
             border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 600;
-            background: rgba(255,255,255,0.05);
-            color: #94a3b8;
-            border: 1px solid rgba(255,255,255,0.08);
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
             white-space: nowrap;
         }
 
@@ -259,15 +263,15 @@
             color: #64748b;
             font-weight: 600;
             padding: 0.3rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-bottom: 1px solid #e2e8f0;
         }
         .env-table td {
             padding: 0.35rem 0;
-            color: #94a3b8;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
         }
         .env-table td:first-child {
-            color: #cbd5e1;
+            color: #334155;
             font-weight: 500;
             font-family: 'Courier New', monospace;
             font-size: 0.65rem;
@@ -341,7 +345,7 @@
                 <a href="https://github.com/idkjustletmein/cicd-crypto" target="_blank" class="svc-link">
                     <span class="svc-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></span><span class="svc-label">GitHub Repository</span><span class="svc-arrow">↗</span>
                 </a>
-                <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dast.yml" target="_blank" class="svc-link" style="background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.2); color:#fcd34d;">
+                <a href="https://github.com/idkjustletmein/cicd-crypto/actions/workflows/dast.yml" target="_blank" class="svc-link" style="background:#fffbeb; border-color:#fde68a; color:#d97706;">
                     <span class="svc-icon"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span><span class="svc-label">Trigger DAST Manually</span><span class="svc-arrow">↗</span>
                 </a>
             </div>
@@ -365,7 +369,7 @@
                 <div class="arch-arrow">↓</div>
                 <div class="arch-node red"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg> OWASP ZAP + k6</div>
                 <div class="arch-arrow">↓</div>
-                <div class="arch-node" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3);color:#c4b5fd;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Discord Alert</div>
+                <div class="arch-node" style="background:#faf5ff;border-color:#e9d5ff;color:#7e22ce;"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Discord Alert</div>
             </div>
         </div>
 
@@ -424,11 +428,11 @@
             const ms = Math.round(performance.now() - start);
             dot.className = 'health-dot online';
             text.textContent = `Online (${ms}ms)`;
-            text.style.color = '#22c55e';
+            text.style.color = '#16a34a';
         } catch {
             dot.className = 'health-dot offline';
             text.textContent = 'Unreachable';
-            text.style.color = '#ef4444';
+            text.style.color = '#dc2626';
         }
     }
 
@@ -492,7 +496,7 @@
                 buildCard('bugs', 'Bugs', 'number');
 
         } catch (e) {
-            document.getElementById('sonar-metrics').innerHTML = `<div class="metric-label" style="grid-column:1/-1; color:#f87171">Failed to load SonarCloud metrics</div>`;
+            document.getElementById('sonar-metrics').innerHTML = `<div class="metric-label" style="grid-column:1/-1; color:#dc2626">Failed to load SonarCloud metrics</div>`;
         }
     }
 
