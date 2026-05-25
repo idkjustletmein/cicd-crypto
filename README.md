@@ -11,7 +11,7 @@ An interactive web application for learning and experimenting with classical and
 ### 🔑 Encryption Tools
 Encrypt and decrypt things using **11 classical ciphers**:
 
-| Cipher | Type | Desc |
+| Cipher | Type | Description |
 |--------|------|-------------|
 | Caesar | Substitution | Simple letter shift |
 | Vigenère | Polyalphabetic | Keyword-based substitution |
